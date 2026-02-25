@@ -11,7 +11,7 @@ template: abnt
 style: academico
 ```
 
-See the [examples/](examples/) directory for a complete monograph example.
+See the [examples/](examples/) directory for a complete [monograph example](https://github.com/SpecIR/specc-abnt/raw/refs/heads/word/monografia.docx).
 
 ## Customizing DOCX Output
 
