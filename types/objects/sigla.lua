@@ -1,7 +1,7 @@
 ---SIGLA - Inline acronym/abbreviation definition and tracking (ABNT)
 ---Syntax: `sigla: Full Meaning Text (ABBREV)`
 ---Renders as: "Full Meaning Text (ABBREV)" on first occurrence
----Stores in specview_data table for list generation via `select: sigla_list`
+---Stores in specview_data table for list generation via the sigla_list view
 
 local M = { name = "sigla" }
 

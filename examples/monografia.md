@@ -52,19 +52,11 @@ This document serves as a tutorial and demonstration of the SpecCompiler ABNT te
 
 ## Lista de Figuras
 
-`lof:`
-
 ## Lista de Tabelas
-
-`select: lot`
 
 ## Lista de Abreviaturas e Siglas
 
-`select: sigla_list`
-
 ## Sumário
-
-`select: toc`
 
 ## Introdução
 
@@ -568,9 +560,9 @@ Ferramentas tradicionais separam **documentação** (conteúdo estático, escrit
 
 Neste documento, elementos como:
 
-- `select: toc` — sumário gerado automaticamente da estrutura
-- `select: lof` — lista de figuras extraída do banco de dados
-- `select: sigla_list` — lista de siglas populada durante a compilação
+- `toc:` — sumário gerado automaticamente da estrutura
+- `lof:` — lista de figuras extraída do banco de dados
+- `sigla_list:` — lista de siglas populada durante a compilação
 - `chart:abnt-types{query="..."}` — gráfico que consulta views SQL
 
 ...não são conteúdo estático. São **consultas materializadas** que se atualizam a cada build. O documento é simultaneamente **documentação** (texto autoral) e **relatório** (dados do sistema).
@@ -681,10 +673,10 @@ Aplicáveis a `fig:`, `puml:`, `chart:`:
 
 ### Listas Automáticas
 
-    `select: toc`        — Sumário
-    `select: lof`        — Lista de figuras
-    `select: lot`        — Lista de tabelas
-    `select: sigla_list` — Lista de siglas
+    `toc:`        — Sumário
+    `lof:`        — Lista de figuras
+    `lot:`        — Lista de tabelas
+    `sigla_list:` — Lista de siglas
 
 ### Configuração (project.yaml)
 
