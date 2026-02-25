@@ -1,0 +1,25 @@
+project:
+  code: MONOGRAFIA_EXAMPLE
+  name: Exemplo de Monografia ABNT
+
+template: abnt
+style: academico
+output_dir: build/
+
+doc_files:
+  - monografia.md
+
+logging:
+  level: info
+  format: console
+  color: true
+
+bibliography: references.bib
+csl: abnt.csl
+
+outputs:
+  - format: docx
+    path: build/{spec_id}.docx
+  - format: latex
+    path: build/{spec_id}.tex
+    top_level_division: chapter

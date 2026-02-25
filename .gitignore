@@ -1,0 +1,29 @@
+# Built vendor dependencies (created by install.sh)
+vendor/
+
+# Compiled binaries (created by install.sh via deno compile)
+bin/echarts-render
+bin/mml2omml
+
+# Build artifacts
+build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Deno cache (if running locally)
+.deno/
+
+# Test reports (coverage, JUnit, HTML)
+tests/reports/
+
+# Test build outputs
+tests/e2e/*/build/

@@ -1,0 +1,146 @@
+name: Build, Test, and Publish
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*', 'gen*']
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  BASE_IMAGE: ghcr.io/specir/speccompiler:latest
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build the specc-abnt image, smoke-test, and publish to GHCR.
+  # ---------------------------------------------------------------------------
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push
+        id: build-push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: BASE_IMAGE=${{ env.BASE_IMAGE }}
+          cache-from: type=gha,scope=main
+          cache-to: type=gha,mode=max,scope=main
+
+      - name: Make package public
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PACKAGE_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          curl -sf -X PATCH \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME}" \
+            -d '{"visibility":"public"}' || echo "::warning::Could not set package visibility to public"
+
+      - name: Smoke test
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
+
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace/examples \
+            "${IMAGE}" \
+            /opt/speccompiler/bin/speccompiler-core project.yaml
+
+          test -f examples/build/*.docx
+
+  # ---------------------------------------------------------------------------
+  # Build the example monograph and deploy .docx to the word branch.
+  # ---------------------------------------------------------------------------
+  deploy-word:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/gen'))
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build example monograph
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace/examples \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" \
+            /opt/speccompiler/bin/speccompiler-core project.yaml
+
+      - name: Deploy .docx to word branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch word branch or create it
+          if git fetch origin word; then
+            git worktree add _word origin/word
+          else
+            git worktree add --orphan _word
+            cd _word && git checkout --orphan word && cd ..
+          fi
+
+          # Copy only the .docx output
+          cp examples/build/*.docx _word/
+
+          # Commit and push
+          cd _word
+          git add -A
+          git diff --cached --quiet && echo "No changes to deploy" && exit 0
+          git commit -m "Deploy ABNT monograph from ${GITHUB_SHA::8}"
+          git push origin HEAD:word

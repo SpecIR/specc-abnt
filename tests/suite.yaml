@@ -1,0 +1,13 @@
+# ABNT Model Tests
+# Tests for ABNT document model structure and OOXML output
+
+project:
+  code: TEST_ABNT
+  name: ABNT Model Tests
+
+template: abnt
+style: academico
+output_format: json
+
+bibliography: references.bib
+csl: abnt.csl
