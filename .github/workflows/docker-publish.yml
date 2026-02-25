@@ -87,7 +87,7 @@ jobs:
             "${IMAGE}" \
             /opt/speccompiler/bin/speccompiler-core project.yaml
 
-          test -f examples/build/*.docx
+          test -f examples/build/monografia.docx
 
   # ---------------------------------------------------------------------------
   # Build the example monograph and deploy .docx to the word branch.
