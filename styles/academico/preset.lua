@@ -998,26 +998,6 @@ return {
         },
     },
 
-    -- Letter sequence for Appendix
-    appendix_numbering = {
-        abstract_num_id = 3,
-        name = "AppendixNumbering",
-        multi_level_type = "singleLevel",
-        levels = {
-            { level = 0, format = "upperLetter", text = "APENDICE %1", alignment = "center", start = 1, suffix = "nothing" },
-        },
-    },
-
-    -- Letter sequence for Annex
-    annex_numbering = {
-        abstract_num_id = 4,
-        name = "AnnexNumbering",
-        multi_level_type = "singleLevel",
-        levels = {
-            { level = 0, format = "upperLetter", text = "ANEXO %1", alignment = "center", start = 1, suffix = "nothing" },
-        },
-    },
-
     -- ========================================================================
     -- Section Configuration
     -- ========================================================================

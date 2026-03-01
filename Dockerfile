@@ -18,9 +18,11 @@ COPY postprocessors/ /opt/speccompiler/models/abnt/postprocessors/
 COPY styles/         /opt/speccompiler/models/abnt/styles/
 COPY data_views/     /opt/speccompiler/models/abnt/data_views/
 COPY config.lua      /opt/speccompiler/models/abnt/config.lua
+COPY tests/          /opt/speccompiler/models/abnt/tests/
 
-# Ensure files are readable when running as non-root user
-RUN chmod -R a+rX /opt/speccompiler/models/abnt/
+# Ensure files are readable, and tests/build is writable for test runner
+RUN chmod -R a+rX /opt/speccompiler/models/abnt/ \
+    && chown -R speccompiler:speccompiler /opt/speccompiler/models/abnt/tests/
 
 # Switch back to non-root user
 USER speccompiler

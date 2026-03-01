@@ -89,6 +89,15 @@ jobs:
 
           test -f examples/build/monografia.docx
 
+      - name: Run model tests
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
+
+          docker run --rm \
+            -e SPECCOMPILER_HOME=/opt/speccompiler \
+            "${IMAGE}" \
+            /opt/speccompiler/tests/run.sh abnt-tests
+
   # ---------------------------------------------------------------------------
   # Build the example monograph and deploy .docx to the word branch.
   # ---------------------------------------------------------------------------

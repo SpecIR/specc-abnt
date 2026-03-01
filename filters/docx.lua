@@ -272,7 +272,7 @@ local function ooxml_table_valign_start(height)
         }),
     }))
     local trPr = xml.serialize_element(xml.node("w:trPr", {}, {
-        xml.node("w:trHeight", {["w:val"] = tostring(height), ["w:hRule"] = "exact"}),
+        xml.node("w:trHeight", {["w:val"] = tostring(height), ["w:hRule"] = "atLeast"}),
     }))
     local tcPr = xml.serialize_element(xml.node("w:tcPr", {}, {
         xml.node("w:tcW", {["w:w"] = "5000", ["w:type"] = "pct"}),
@@ -327,6 +327,8 @@ local SEMANTIC_CLASS_MAP = {
     ["epigraph"]           = { style = "Epigraph", uppercase = false },
     ["unnumbered-heading"] = { style = "UnnumberedHeading", uppercase = false },
     ["toc-heading"]        = { style = "TOCHeading", uppercase = false },
+    ["appendix-heading"]   = { style = "AppendixHeading", uppercase = false },
+    ["annex-heading"]      = { style = "AnnexHeading", uppercase = false },
 }
 
 -- ============================================================================
