@@ -7,7 +7,7 @@ While [SpecCompiler](https://github.com/SpecIR/SpecCompiler) was developed for t
 Install SpecCompiler (if not already installed):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SpecIR/SpecCompiler/main/scripts/remote_install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/SpecIR/SpecCompiler/main/scripts/install.sh | bash
 ```
 
 ```bash

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ABNT Model - Docker Installer
-# Builds a Docker image with ABNT model included
+# Builds a Docker image with ABNT model included and registers it
 
 set -e
 
