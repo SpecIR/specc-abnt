@@ -1,0 +1,24 @@
+project:
+  code: SPECDOWN_RT_SPECIR
+  name: Technical Report - Spec-IR and SpecDown
+
+template: abnt
+style: academico
+
+output_dir: build/
+
+logging:
+  level: info
+  format: console
+  color: true
+
+
+doc_files:
+  - rt-specir.md
+
+bibliography: references.bib
+csl: abnt.csl
+
+outputs:
+  - format: docx
+    path: build/{spec_id}.docx
