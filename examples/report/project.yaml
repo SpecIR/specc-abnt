@@ -17,7 +17,6 @@ doc_files:
   - rt-specir.md
 
 bibliography: references.bib
-csl: abnt.csl
 
 outputs:
   - format: docx

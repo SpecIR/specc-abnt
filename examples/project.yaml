@@ -15,7 +15,6 @@ logging:
   color: true
 
 bibliography: references.bib
-csl: abnt.csl
 
 outputs:
   - format: docx

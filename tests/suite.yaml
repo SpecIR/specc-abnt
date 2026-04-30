@@ -10,4 +10,3 @@ style: academico
 output_format: json
 
 bibliography: references.bib
-csl: abnt.csl

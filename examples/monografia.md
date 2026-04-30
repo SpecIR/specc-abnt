@@ -512,11 +512,11 @@ O processamento de citações utiliza dois componentes:
 
 2. **CSL (Citation Style Language)**: Arquivo XML que define o estilo de formatação das citações
 
-O template ABNT inclui o arquivo `citations.csl` com o estilo ABNT (autor-data). A configuração é feita no `project.yaml`:
+O template ABNT já fornece o estilo de citação (`abnt.csl`, declarado em `models/abnt/config.lua`); o `project.yaml` precisa apenas indicar a bibliografia:
 
     # Configuração de bibliografia (citeproc)
     bibliography: references.bib
-    csl: ../dist/citations.csl
+    # csl: opcional — só declare aqui para sobrescrever o estilo do modelo
 
 O arquivo CSL determina:
 - Formato da citação no texto: (Autor, ano) vs [Autor, ano]
@@ -785,9 +785,8 @@ Aplicáveis a `fig:`, `puml:`, `chart:`:
       preset: academico
       reference_doc: ../dist/reference.docx
 
-    # Bibliografia (citeproc)
+    # Bibliografia (citeproc); o estilo CSL é fornecido pelo modelo ABNT.
     bibliography: references.bib
-    csl: ../dist/citations.csl
 
 ## ANNEX: Normas ABNT Consultadas
 
