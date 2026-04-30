@@ -29,12 +29,13 @@ local function generate_auto_lot()
 end
 
 ---Render LOT entries to OOXML (pure function, no DB access).
+---`identifier` is the canonical float key used by emitted bookmarks (`syntax_key`).
 ---@param entries table Array of {identifier, caption, number, label}
 ---@return string OOXML content
 function M.render(entries)
     local parts = {}
     for _, tbl in ipairs(entries or {}) do
-        local title = tbl.caption or tbl.label or ""
+        local title = tbl.caption or tbl.label or tbl.identifier or ""
         local text = string.format("Tabela %s - %s", tbl.number or "", title)
         local para = OOXMLBuilder.static.pageref_entry({
             anchor = tbl.identifier or "",
@@ -74,13 +75,17 @@ function M.generate(data, spec_id, options)
     end
 
     -- Fallback: query DB (should not happen after view_materializer runs)
-    -- Only include tables that have captions
+    -- Query the TABLE counter group so future table-like float types are also
+    -- included. Use syntax_key as the emitted bookmark identifier.
     local tables = data:query_all([[
-        SELECT anchor AS identifier, caption, number, label FROM spec_floats
-        WHERE specification_ref = :spec_id
-          AND type_ref = 'TABLE'
-          AND caption IS NOT NULL AND caption != ''
-        ORDER BY file_seq
+        SELECT f.syntax_key AS identifier, f.caption, f.number,
+               f.syntax_key AS label
+        FROM spec_floats f
+        JOIN spec_float_types ft ON f.type_ref = ft.identifier
+        WHERE f.specification_ref = :spec_id
+          AND COALESCE(ft.counter_group, ft.identifier) = 'TABLE'
+          AND f.caption IS NOT NULL AND f.caption != ''
+        ORDER BY f.file_seq
     ]], { spec_id = spec_id })
 
     return M.render(tables)

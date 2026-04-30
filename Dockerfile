@@ -17,6 +17,7 @@ COPY filters/        /opt/speccompiler/models/abnt/filters/
 COPY postprocessors/ /opt/speccompiler/models/abnt/postprocessors/
 COPY styles/         /opt/speccompiler/models/abnt/styles/
 COPY data_views/     /opt/speccompiler/models/abnt/data_views/
+COPY assets/         /opt/speccompiler/models/abnt/assets/
 COPY config.lua      /opt/speccompiler/models/abnt/config.lua
 COPY tests/          /opt/speccompiler/models/abnt/tests/
 

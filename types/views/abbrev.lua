@@ -6,6 +6,7 @@
 ---@module abnt.types.views.abbrev
 
 local default_abbrev = require("models.default.types.views.abbrev")
+local default_abbrev_list = require("models.default.types.views.abbrev_list")
 
 local M = {}
 
@@ -21,8 +22,9 @@ M.handler = {
     on_render_Code = default_abbrev.handler.on_render_Code,
 }
 
--- Re-export list generation functions (used by sigla_list)
-M.get_list = default_abbrev.get_list
-M.generate_list_ooxml = default_abbrev.generate_list_ooxml
+-- Re-export list generation functions from abbrev_list (used by sigla_list)
+-- generate_list_ooxml and get_list are defined in abbrev_list.lua, not abbrev.lua
+M.get_list = default_abbrev_list.get_list
+M.generate_list_ooxml = default_abbrev_list.generate_list_ooxml
 
 return M

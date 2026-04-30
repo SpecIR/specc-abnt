@@ -559,6 +559,26 @@ return {
             alignment = "center",
         },
 
+        {
+            id = "ApprovalPagePlaceholder",
+            name = "Approval Page Placeholder",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18 },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "center",
+        },
+
+        {
+            id = "CatalogSheetPlaceholder",
+            name = "Catalog Sheet Placeholder",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18 },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "justified",
+        },
+
         -- ====================================================================
         -- Book Part Style (for book-style documents)
         -- ====================================================================

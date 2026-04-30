@@ -38,10 +38,11 @@ function M.on_render_SpecObject(obj, ctx)
     header_div.classes = {"unnumbered-heading"}
     render_utils.add_header_blocks(blocks, { header_div })
 
-    -- Body: Generate abbreviation list using default abbrev module
-    local ok, abbrev_view = pcall(require, "models.default.types.views.abbrev")
-    if ok and abbrev_view and abbrev_view.generate_list_ooxml then
-        local ooxml = abbrev_view.generate_list_ooxml(ctx.db, ctx.spec_id)
+    -- Body: Generate abbreviation list using default abbrev_list module
+    -- (generate_list_ooxml is defined in abbrev_list.lua, not abbrev.lua)
+    local ok, abbrev_list_view = pcall(require, "models.default.types.views.abbrev_list")
+    if ok and abbrev_list_view and abbrev_list_view.generate_list_ooxml then
+        local ooxml = abbrev_list_view.generate_list_ooxml(ctx.db, ctx.spec_id)
         if ooxml then
             render_utils.add_blocks(blocks, { pandoc.RawBlock("openxml", ooxml) })
             return blocks

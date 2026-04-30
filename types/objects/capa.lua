@@ -34,32 +34,11 @@ local function vertical_space(twips)
     return pandoc.RawBlock("specdown", "vertical-space:" .. tostring(twips))
 end
 
-local function get_spec_attributes(db, spec_ref)
-    if not db or not spec_ref then return {} end
-
-    local results = db:query_all([[
-        SELECT name, string_value, raw_value
-        FROM spec_attribute_values
-        WHERE specification_ref = :spec_ref
-          AND owner_object_id IS NULL
-          AND owner_float_id IS NULL
-    ]], {spec_ref = spec_ref})
-
-    local attrs = {}
-    if results then
-        for _, row in ipairs(results) do
-            local name = row.name and row.name:lower() or ""
-            attrs[name] = row.string_value or row.raw_value or ""
-        end
-    end
-    return attrs
-end
-
-function M._render_body(ctx, db)
+function M._render_body(ctx)
     local blocks = {}
 
     local obj_attrs = ctx.attributes or {}
-    local spec_attrs = get_spec_attributes(db, ctx.spec_id)
+    local spec_attrs = ctx.spec_attributes or {}
 
     local function get_attr(name)
         local lower = name:lower()
@@ -114,14 +93,14 @@ function M._render_body(ctx, db)
     return blocks
 end
 
-function M.on_render_SpecObject(obj, ctx)
+function M.on_render_SpecObject(_obj, ctx)
     local blocks = {}
 
     -- No page break at START (capa is first page)
     -- No header for capa
 
     -- Body
-    local body_blocks = M._render_body(ctx, ctx.db)
+    local body_blocks = M._render_body(ctx)
     render_utils.add_blocks(blocks, body_blocks)
 
     -- Add page break at END of capa for proper section definition

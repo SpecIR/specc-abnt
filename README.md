@@ -27,6 +27,10 @@ style: academico
 
 See the [examples/](examples/) directory for a complete [monograph example](https://github.com/SpecIR/specc-abnt/raw/refs/heads/word/monografia.docx).
 
+## Canonical source
+
+This repository is the canonical source for the ABNT model. A copy is also bundled inside SpecCompiler at `SpecCompiler/models/abnt/` for convenience, but it must be considered read-only — do not edit it directly. Any change to the ABNT model lands here first; the bundled copy is refreshed from this repository on demand. Editing the bundled copy directly causes drift between the two trees and forces a manual reconciliation later.
+
 ## Customizing DOCX Output
 
 ABNT standards are notoriously strict about formatting -- margins, font sizes, spacing, heading styles, page numbering, and different formatting rules for different sections. This makes specc-abnt a good reference for anyone building custom SpecCompiler models that need fine-grained control over DOCX output.

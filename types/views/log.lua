@@ -27,12 +27,13 @@ local function generate_auto_log()
 end
 
 ---Render LOG entries to OOXML (pure function, no DB access).
+---`identifier` is the canonical float key used by emitted bookmarks (`syntax_key`).
 ---@param entries table Array of {identifier, caption, number, label}
 ---@return string OOXML content
 function M.render(entries)
     local parts = {}
     for _, chart in ipairs(entries or {}) do
-        local title = chart.caption or chart.label or ""
+        local title = chart.caption or chart.label or chart.identifier or ""
         local text = string.format("Gráfico %s - %s", chart.number or "", title)
         local para = OOXMLBuilder.static.pageref_entry({
             anchor = chart.identifier or "",
@@ -71,12 +72,16 @@ function M.generate(data, spec_id, options)
         return M.render(options.resolved_data)
     end
 
-    -- Fallback: query DB (should not happen after view_materializer runs)
+    -- Fallback: query DB (should not happen after view_materializer runs).
+    -- Use syntax_key as the emitted bookmark identifier.
     local charts = data:query_all([[
-        SELECT identifier, caption, number, label FROM spec_floats
-        WHERE specification_ref = :spec_id
-          AND type_ref = 'CHART'
-        ORDER BY file_seq
+        SELECT f.syntax_key AS identifier, f.caption, f.number,
+               f.syntax_key AS label
+        FROM spec_floats f
+        WHERE f.specification_ref = :spec_id
+          AND f.type_ref = 'CHART'
+          AND f.caption IS NOT NULL AND f.caption != ''
+        ORDER BY f.file_seq
     ]], { spec_id = spec_id })
 
     return M.render(charts)

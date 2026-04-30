@@ -23,10 +23,11 @@ M.view = {
 ---@param options table|nil View options
 ---@return string|nil OOXML content
 function M.generate(data, spec_id, options)
-    -- Use the default model's abbrev view for list generation
-    local ok, abbrev = pcall(require, "models.default.types.views.abbrev")
-    if ok and abbrev and abbrev.generate_list_ooxml then
-        return abbrev.generate_list_ooxml(data, spec_id)
+    -- Use the default model's abbrev_list view for list generation
+    -- (generate_list_ooxml is defined in abbrev_list.lua, not abbrev.lua)
+    local ok, abbrev_list = pcall(require, "models.default.types.views.abbrev_list")
+    if ok and abbrev_list and abbrev_list.generate_list_ooxml then
+        return abbrev_list.generate_list_ooxml(data, spec_id)
     end
 
     -- Fallback: return placeholder if abbrev module not available

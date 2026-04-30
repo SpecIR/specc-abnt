@@ -1,6 +1,6 @@
 ---ABNT Math type override.
 ---Portuguese caption format for equations.
----Inherits external_render from default/types/floats/math.lua
+---Inherits native emit-time math rendering from default/types/floats/math.lua
 ---@module abnt.math
 
 local M = {}
@@ -12,7 +12,8 @@ M.float = {
     caption_format = "Equação",
     counter_group = "EQUATION",
     aliases = { "math", "eq", "equation", "formula", "equacao", "asciimath" },
-    needs_external_render = true,  -- Processed by external_render_handler
+    -- Native Pandoc math is produced by the default MATH handler during EMIT.
+    needs_external_render = false,
 }
 
 return M
