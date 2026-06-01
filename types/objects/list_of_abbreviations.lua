@@ -37,9 +37,9 @@ return {
             header_div.classes = {"unnumbered-heading"}
             render_utils.add_header_blocks(blocks, { header_div })
 
-            -- Body: Lista de Siglas (default ABBREV_LIST view, via the host)
-            local ooxml = lists.abbrev_list_ooxml(ctx.data, ctx.spec_id)
-            render_utils.add_blocks(blocks, { ctx.pandoc.RawBlock("openxml", ooxml) })
+            -- Body: Lista de Siglas (semantic Pandoc table via the host; the docx
+            -- filter styles it -- no model-side OOXML here)
+            render_utils.add_blocks(blocks, { lists.abbrev_list_block(ctx) })
 
             return blocks
         end,

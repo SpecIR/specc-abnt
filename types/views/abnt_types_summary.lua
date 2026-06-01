@@ -13,7 +13,9 @@
 ---@param data DataManager Database instance
 ---@param spec_id string Specification identifier (unused)
 ---@return table dataset ECharts dataset format
-local function generate(params, data, spec_id)
+local function dataset(dctx)
+    local data = dctx.data
+    local spec_id = dctx.spec_id or "default"
     -- Query level-2 objects (main sections) with their type inheritance
     -- Types extend PRE_TEXTUAL, TEXTUAL, or POST_TEXTUAL (which all extend SECTION)
     -- SECTION type (unrecognized titles) treated as TEXTUAL in ABNT context
@@ -64,6 +66,6 @@ return {
         description = "Summary of ABNT object types grouped by category (pre-textual, textual, post-textual)",
     },
     hooks = {
-        generate = generate,
+        dataset = dataset,
     },
 }

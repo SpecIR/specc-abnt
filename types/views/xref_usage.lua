@@ -12,7 +12,9 @@
 ---@param data DataManager Database instance
 ---@param spec_id string Specification identifier (unused)
 ---@return table result ECharts Sankey format with data/links
-local function generate(params, data, spec_id)
+local function dataset(dctx)
+    local data = dctx.data
+    local spec_id = dctx.spec_id or "default"
     -- Parse float type from target_text prefix (e.g., "chart:gauss" → "Gráficos")
     local sql = [[
         SELECT
@@ -76,6 +78,6 @@ return {
         description = "Cross-reference distribution by target type (Sankey format)",
     },
     hooks = {
-        generate = generate,
+        dataset = dataset,
     },
 }

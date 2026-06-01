@@ -17,7 +17,7 @@ return {
         description = "Gaussian/Normal distribution curve data (alias for gauss)",
     },
     hooks = {
-        -- Re-export the generate function from gauss
-        generate = gauss.hooks.generate,
+        -- Re-export the dataset function from gauss
+        dataset = gauss.hooks.dataset,
     },
 }

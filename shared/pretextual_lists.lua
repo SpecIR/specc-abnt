@@ -17,7 +17,7 @@
 
 local OOXMLBuilder = require("infra.format.docx.ooxml_builder")
 local float_anchor = require("pipeline.shared.float_anchor")
-local registry = require("contract.registry")
+local hook_ctx = require("pipeline.shared.hook_ctx")
 
 local M = {}
 
@@ -82,18 +82,23 @@ function M.toc_ooxml(opts)
 </w:p>]], switches)
 end
 
----Generate the Lista de Siglas as OOXML, via the default model's ABBREV_LIST
----view (host-dispatched, no cross-model file-path require).
----@param data DataManager Database instance
----@param spec_id string Specification identifier
----@return string OOXML content
-function M.abbrev_list_ooxml(data, spec_id)
-    local host = registry.current()
-    local generate = host and host:get_hook("view", "ABBREV_LIST", "generate")
-    if generate then
-        return generate({}, data, spec_id)
+---Build the Lista de Siglas as a semantic Pandoc table, via the default model's
+---ABBREV_LIST `build_block` data hook (host-dispatched off the render ctx -- no
+---cross-model file-path require, no raw OOXML). Returns Pandoc AST; the docx/html
+---filters style it per format.
+---@param ctx table the object render ctx (ctx.host, ctx.data, ctx.spec_id, ctx.pandoc)
+---@return table block A pandoc.Block
+function M.abbrev_list_block(ctx)
+    local build_block = ctx.host
+        and ctx.host:get_hook("view", "ABBREV_LIST", "build_block")
+    if build_block then
+        local dctx = hook_ctx.build_data(
+            { log = ctx.log, model = ctx.model, config = ctx.config },
+            ctx.data, ctx.diagnostics, { params = {} }, "build_block", ctx.spec_id)
+        local block = build_block(dctx)
+        if block then return block end
     end
-    return '<w:p><w:r><w:t>[Nenhuma sigla encontrada]</w:t></w:r></w:p>'
+    return ctx.pandoc.Para({ ctx.pandoc.Str("[Nenhuma sigla encontrada]") })
 end
 
 return M
