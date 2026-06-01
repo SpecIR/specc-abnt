@@ -2,6 +2,7 @@
 ---Per ABNT NBR 14724:2011 - optional, auto-generated list
 
 local render_utils = require("pipeline.shared.render_utils")
+local lists = require("models.abnt.shared.pretextual_lists")
 
 return {
     kind = "object",
@@ -26,7 +27,7 @@ return {
             local blocks = {}
 
             -- Page break
-            render_utils.add_page_break(blocks, "next")
+            render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- Header: "LISTA DE FIGURAS"
             local title = "LISTA DE FIGURAS"
@@ -34,12 +35,10 @@ return {
             header_div.classes = {"unnumbered-heading"}
             render_utils.add_header_blocks(blocks, { header_div })
 
-            -- Body: Generate LOF OOXML
-            local lof_view = require("models.abnt.types.views.lof")
-            local ooxml = lof_view.generate(ctx.data, ctx.spec_id, { manual = true })
-            if ooxml then
-                render_utils.add_blocks(blocks, { ctx.pandoc.RawBlock("openxml", ooxml) })
-            end
+            -- Body: Lista de Figuras (PAGEREF entries)
+            local ooxml = lists.float_list_ooxml(ctx.data, ctx.spec_id,
+                "FIGURE", "Figura", "Nenhuma figura encontrada.")
+            render_utils.add_blocks(blocks, { ctx.pandoc.RawBlock("openxml", ooxml) })
 
             return blocks
         end,

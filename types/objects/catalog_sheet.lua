@@ -66,7 +66,6 @@ return {
     },
     hooks = {
         render = function(ctx)
-            local obj = ctx.subject.object
             local blocks = {}
 
             render_utils.add_page_break(blocks, "next")

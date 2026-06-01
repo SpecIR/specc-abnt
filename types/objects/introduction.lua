@@ -24,7 +24,7 @@ return {
             local blocks = {}
 
             -- Page break to odd page (matches abntex2 \textual behavior)
-            render_utils.add_page_break(blocks, "next")
+            render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- Header: always level 1 (chapter-level textual element).
             -- obj.level inherits from the markdown heading (## = 2), but the assembler's

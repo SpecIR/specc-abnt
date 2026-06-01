@@ -8,18 +8,21 @@
 
 local render_utils = require("pipeline.shared.render_utils")
 
--- Semantic helpers
-local function semantic_div(text, class)
-    local div = pandoc.Div({pandoc.Para({pandoc.Str(text)})})
-    div.classes = {class}
-    return div
-end
-
-local function vertical_space(twips)
-    return pandoc.RawBlock("specdown", "vertical-space:" .. tostring(twips))
-end
-
 local function render_body(ctx)
+    -- One node-construction rule for this file: the ctx-provided pandoc, same as
+    -- the rest of the model. The helpers below close over it.
+    local pandoc = ctx.pandoc
+
+    local function semantic_div(text, class)
+        local div = pandoc.Div({pandoc.Para({pandoc.Str(text)})})
+        div.classes = {class}
+        return div
+    end
+
+    local function vertical_space(twips)
+        return pandoc.RawBlock("specdown", "vertical-space:" .. tostring(twips))
+    end
+
     local blocks = {}
 
     local obj_attrs = ctx.subject.attributes or {}
@@ -46,7 +49,7 @@ local function render_body(ctx)
     local docx = ctx.config.docx or {}
     local use_cover_image = docx.cover_image ~= false and docx.use_cover_image ~= false
     if ctx.format == "docx" and use_cover_image then
-        table.insert(blocks, ctx.pandoc.RawBlock("speccompiler", "abnt-cover-background"))
+        table.insert(blocks, pandoc.RawBlock("speccompiler", "abnt-cover-background"))
         if title then table.insert(blocks, semantic_div(title, "cover-image-title")) end
         if author then table.insert(blocks, semantic_div(author, "cover-image-author")) end
         return blocks
@@ -101,7 +104,6 @@ return {
     },
     hooks = {
         render = function(ctx)
-            local obj = ctx.subject.object
             local blocks = {}
 
             -- No page break at START (capa is first page)

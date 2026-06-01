@@ -23,11 +23,10 @@ return {
     },
     hooks = {
         render = function(ctx)
-            local obj = ctx.subject.object
             local blocks = {}
 
             -- Page break
-            render_utils.add_page_break(blocks, "next")
+            render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- No header for dedicatoria
 

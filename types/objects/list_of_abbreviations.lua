@@ -4,6 +4,7 @@
 ---Uses semantic markers converted by format-specific filters.
 
 local render_utils = require("pipeline.shared.render_utils")
+local lists = require("models.abnt.shared.pretextual_lists")
 
 return {
     kind = "object",
@@ -28,7 +29,7 @@ return {
             local blocks = {}
 
             -- Page break
-            render_utils.add_page_break(blocks, "next")
+            render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- Header: "LISTA DE ABREVIATURAS E SIGLAS"
             local title = "LISTA DE ABREVIATURAS E SIGLAS"
@@ -36,25 +37,9 @@ return {
             header_div.classes = {"unnumbered-heading"}
             render_utils.add_header_blocks(blocks, { header_div })
 
-            -- Body: Generate abbreviation list using default abbrev_list module
-            -- (generate_list_ooxml is defined in abbrev_list.lua, not abbrev.lua)
-            local ok, abbrev_list_view = pcall(require, "models.default.types.views.abbrev_list")
-            if ok and abbrev_list_view and abbrev_list_view.generate_list_ooxml then
-                local ooxml = abbrev_list_view.generate_list_ooxml(ctx.data, ctx.spec_id)
-                if ooxml then
-                    render_utils.add_blocks(blocks, { ctx.pandoc.RawBlock("openxml", ooxml) })
-                    return blocks
-                end
-            end
-
-            -- Fallback: pass through original content
-            local body_blocks = {}
-            for _, block in ipairs(ctx.subject.element or {}) do
-                if block.t ~= "Header" then
-                    table.insert(body_blocks, block)
-                end
-            end
-            render_utils.add_blocks(blocks, body_blocks)
+            -- Body: Lista de Siglas (default ABBREV_LIST view, via the host)
+            local ooxml = lists.abbrev_list_ooxml(ctx.data, ctx.spec_id)
+            render_utils.add_blocks(blocks, { ctx.pandoc.RawBlock("openxml", ooxml) })
 
             return blocks
         end,

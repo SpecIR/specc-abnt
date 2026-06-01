@@ -644,9 +644,9 @@ Ferramentas tradicionais separam **documentação** (conteúdo estático, escrit
 
 Neste documento, elementos como:
 
-- `toc:` — sumário gerado automaticamente da estrutura
-- `lof:` — lista de figuras extraída do banco de dados
-- `sigla_list:` — lista de siglas populada durante a compilação
+- a seção `## Sumário` — sumário gerado automaticamente da estrutura
+- a seção `## Lista de Figuras` — lista de figuras extraída do banco de dados
+- a seção `## Lista de Siglas` — lista de siglas populada durante a compilação
 - `chart:abnt-types{query="..."}` — gráfico que consulta views SQL
 
 ...não são conteúdo estático. São **consultas materializadas** que se atualizam a cada build. O documento é simultaneamente **documentação** (texto autoral) e **relatório** (dados do sistema de tipos).

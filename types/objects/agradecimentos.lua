@@ -24,7 +24,7 @@ return {
             local blocks = {}
 
             -- Page break
-            render_utils.add_page_break(blocks, "next")
+            render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- Header
             local title = obj and obj.title_text or "Agradecimentos"

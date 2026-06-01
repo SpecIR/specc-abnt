@@ -31,12 +31,11 @@ return {
     },
     hooks = {
         render = function(ctx)
-            local obj = ctx.subject.object
             local blocks = {}
 
             -- Page break is handled by capa (at its end) to ensure proper first section definition
             -- Don't add another page break here to avoid duplicate breaks
-            -- render_utils.add_page_break(blocks, "next")
+            -- render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- No header for folha_de_rosto
 

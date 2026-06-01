@@ -2,6 +2,7 @@
 ---Per ABNT NBR 14724:2011 and NBR 6027:2012 - Pre-textual element
 
 local render_utils = require("pipeline.shared.render_utils")
+local lists = require("models.abnt.shared.pretextual_lists")
 
 return {
     kind = "object",
@@ -21,7 +22,7 @@ return {
             local blocks = {}
 
             -- Page break
-            render_utils.add_page_break(blocks, "next")
+            render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- Header: "SUMÁRIO" with TOCHeading style
             -- Uses TOCHeading to prevent TOC header from appearing in the TOC itself
@@ -30,12 +31,9 @@ return {
             header_div.classes = {"toc-heading"}
             render_utils.add_header_blocks(blocks, { header_div })
 
-            -- Body: Generate TOC OOXML
-            local toc_view = require("models.abnt.types.views.toc")
-            local ooxml = toc_view.generate(ctx.data, ctx.spec_id, { manual = false, depth = 3 })
-            if ooxml then
-                render_utils.add_blocks(blocks, { ctx.pandoc.RawBlock("openxml", ooxml) })
-            end
+            -- Body: Sumário (native Word auto-TOC field)
+            local ooxml = lists.toc_ooxml({ depth = 3 })
+            render_utils.add_blocks(blocks, { ctx.pandoc.RawBlock("openxml", ooxml) })
 
             return blocks
         end,

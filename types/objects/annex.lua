@@ -25,7 +25,7 @@ return {
             local blocks = {}
 
             -- Page break
-            render_utils.add_page_break(blocks, "next")
+            render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
             -- Determine letter index by counting siblings of same type
             local Queries = require("db.queries.content")
