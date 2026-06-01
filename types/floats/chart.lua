@@ -8,16 +8,17 @@
 ---@author SpecDown Team
 ---@license MIT
 
-local M = {}
-
-M.float = {
-    id = "CHART",
-    long_name = "Gráfico",
-    description = "Gráfico ECharts renderizado para PNG",
-    caption_format = "Gráfico",   -- Portuguese caption prefix
-    counter_group = "CHART",      -- Separate counter from FIGURE
-    aliases = { "echarts", "echart" },
-    needs_external_render = true,
+return {
+    kind = "float",
+    schema = {
+        id = "CHART",
+        long_name = "Gráfico",
+        description = "Gráfico ECharts renderizado para PNG",
+        caption_format = "Gráfico",   -- Portuguese caption prefix
+        counter_group = "CHART",      -- Separate counter from FIGURE
+        aliases = { "echarts", "echart" },
+        needs_external_render = true,
+        style_id = "CHART",
+    },
+    hooks = {},
 }
-
-return M

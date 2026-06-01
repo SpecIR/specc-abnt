@@ -8,21 +8,6 @@
 
 local render_utils = require("pipeline.shared.render_utils")
 
-local M = {}
-
-M.name = "capa"
-
-M.object = {
-    id = "CAPA",
-    long_name = "Capa",
-    description = "Cover page (Capa) - ABNT NBR 14724:2011",
-    extends = "PRE_TEXTUAL",
-    is_required = true,
-    implicit_aliases = { "Capa", "Cover", "Portada" },
-    header_style_id = "",
-    body_style_id = nil
-}
-
 -- Semantic helpers
 local function semantic_div(text, class)
     local div = pandoc.Div({pandoc.Para({pandoc.Str(text)})})
@@ -34,11 +19,11 @@ local function vertical_space(twips)
     return pandoc.RawBlock("specdown", "vertical-space:" .. tostring(twips))
 end
 
-function M._render_body(ctx)
+local function render_body(ctx)
     local blocks = {}
 
-    local obj_attrs = ctx.attributes or {}
-    local spec_attrs = ctx.spec_attributes or {}
+    local obj_attrs = ctx.subject.attributes or {}
+    local spec_attrs = ctx.subject.spec_attributes or {}
 
     local function get_attr(name)
         local lower = name:lower()
@@ -55,7 +40,16 @@ function M._render_body(ctx)
 
     -- Fallback to original blocks if required attributes missing
     if not (title and author) then
-        return ctx.original_blocks
+        return ctx.subject.element
+    end
+
+    local docx = ctx.config.docx or {}
+    local use_cover_image = docx.cover_image ~= false and docx.use_cover_image ~= false
+    if ctx.format == "docx" and use_cover_image then
+        table.insert(blocks, ctx.pandoc.RawBlock("speccompiler", "abnt-cover-background"))
+        if title then table.insert(blocks, semantic_div(title, "cover-image-title")) end
+        if author then table.insert(blocks, semantic_div(author, "cover-image-author")) end
+        return blocks
     end
 
     -- Build cover page matching abntex2 layout:
@@ -93,22 +87,36 @@ function M._render_body(ctx)
     return blocks
 end
 
-function M.on_render_SpecObject(_obj, ctx)
-    local blocks = {}
+return {
+    kind = "object",
+    schema = {
+        id = "CAPA",
+        long_name = "Capa",
+        description = "Cover page (Capa) - ABNT NBR 14724:2011",
+        extends = "PRE_TEXTUAL",
+        is_required = true,
+        implicit_aliases = { "Capa", "Cover", "Portada" },
+        header_style_id = "",
+        body_style_id = nil
+    },
+    hooks = {
+        render = function(ctx)
+            local obj = ctx.subject.object
+            local blocks = {}
 
-    -- No page break at START (capa is first page)
-    -- No header for capa
+            -- No page break at START (capa is first page)
+            -- No header for capa
 
-    -- Body
-    local body_blocks = M._render_body(ctx)
-    render_utils.add_blocks(blocks, body_blocks)
+            -- Body
+            local body_blocks = render_body(ctx)
+            render_utils.add_blocks(blocks, body_blocks)
 
-    -- Add page break at END of capa for proper section definition
-    -- This ensures the first section is properly terminated before folha de rosto
-    -- (folha de rosto also adds oddPage break, but having it here helps LibreOffice)
-    render_utils.add_page_break(blocks, "odd")
+            -- Add page break at END of capa for proper section definition
+            -- This ensures the first section is properly terminated before folha de rosto
+            -- (folha de rosto also adds oddPage break, but having it here helps LibreOffice)
+            render_utils.add_page_break(blocks, "odd")
 
-    return blocks
-end
-
-return M
+            return blocks
+        end,
+    },
+}

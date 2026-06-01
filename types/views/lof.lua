@@ -5,18 +5,7 @@
 ---@author SpecDown Team
 ---@license MIT
 
-local M = {}
-
 local OOXMLBuilder = require("infra.format.docx.ooxml_builder")
-
-M.view = {
-    id = "LOF",
-    long_name = "Lista de Figuras",
-    description = "List of Figures (Lista de Figuras) - ABNT NBR 14724:2011",
-    inline_prefix = "lof",
-    materializer_type = "lof",
-    counter_group = "FIGURE"
-}
 
 -- ============================================================================
 -- LOF Generation
@@ -32,7 +21,7 @@ end
 ---`identifier` is the canonical float key used by emitted bookmarks (`syntax_key`).
 ---@param entries table Array of {identifier, caption, number, label}
 ---@return string OOXML content
-function M.render(entries)
+local function render_entries(entries)
     local parts = {}
     for _, fig in ipairs(entries or {}) do
         local title = fig.caption or fig.label or fig.identifier or ""
@@ -62,7 +51,7 @@ end
 ---@param spec_id string Specification identifier
 ---@param options table|nil {manual = true, resolved_data = table}
 ---@return string OOXML content
-function M.generate(data, spec_id, options)
+local function generate(data, spec_id, options)
     options = options or {}
 
     if not options.manual then
@@ -71,7 +60,7 @@ function M.generate(data, spec_id, options)
 
     -- Use pre-computed data if available
     if options.resolved_data then
-        return M.render(options.resolved_data)
+        return render_entries(options.resolved_data)
     end
 
     -- Fallback: query DB (should not happen after view_materializer runs)
@@ -89,7 +78,20 @@ function M.generate(data, spec_id, options)
         ORDER BY f.file_seq
     ]], { spec_id = spec_id })
 
-    return M.render(figures)
+    return render_entries(figures)
 end
 
-return M
+return {
+    kind = "view",
+    schema = {
+        id = "LOF",
+        long_name = "Lista de Figuras",
+        description = "List of Figures (Lista de Figuras) - ABNT NBR 14724:2011",
+        inline_prefix = "lof",
+        materializer_type = "lof",
+        counter_group = "FIGURE"
+    },
+    hooks = {},
+    generate = generate,
+    render = render_entries
+}

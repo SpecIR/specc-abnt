@@ -1,0 +1,12 @@
+# Model manifest (HLR-EXT-010).
+name: abnt
+description: >-
+  Brazilian ABNT academic-document model (TCC / monografia / dissertacao /
+  tese per NBR 14724). Overlays the default model with Portuguese float
+  captions (Tabela / Figura / Quadro / Equacao / Grafico / Diagrama) and a
+  separate CHART counter, pre-textual / textual / post-textual section object
+  types, a title-suppressing root specification (the Capa carries the title),
+  and OOXML-generated pre-textual lists (Sumario / Lista de Figuras / Tabelas /
+  Siglas).
+extends: [default]
+requires: []

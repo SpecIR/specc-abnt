@@ -6,14 +6,6 @@
 ---@module abnt_types_summary
 ---@author SpecDown Team
 
-local M = {}
-
-M.view = {
-    id = "ABNT_TYPES_SUMMARY",
-    long_name = "ABNT Types Summary",
-    description = "Summary of ABNT object types grouped by category (pre-textual, textual, post-textual)",
-}
-
 ---Generate summary of ABNT object types by category.
 ---Uses type inheritance (extends field) to classify objects.
 ---Only counts level 2 sections (main chapters), not subsections.
@@ -21,7 +13,7 @@ M.view = {
 ---@param data DataManager Database instance
 ---@param spec_id string Specification identifier (unused)
 ---@return table dataset ECharts dataset format
-function M.generate(params, data, spec_id)
+local function generate(params, data, spec_id)
     -- Query level-2 objects (main sections) with their type inheritance
     -- Types extend PRE_TEXTUAL, TEXTUAL, or POST_TEXTUAL (which all extend SECTION)
     -- SECTION type (unrecognized titles) treated as TEXTUAL in ABNT context
@@ -64,4 +56,14 @@ function M.generate(params, data, spec_id)
     return { source = source }
 end
 
-return M
+return {
+    kind = "view",
+    schema = {
+        id = "ABNT_TYPES_SUMMARY",
+        long_name = "ABNT Types Summary",
+        description = "Summary of ABNT object types grouped by category (pre-textual, textual, post-textual)",
+    },
+    hooks = {
+        generate = generate,
+    },
+}
