@@ -18,7 +18,8 @@ local function generate_auto_log()
 end
 
 ---Render LOG entries to OOXML (pure function, no DB access).
----`identifier` is the canonical float key used by emitted bookmarks (`syntax_key`).
+---`identifier` is the float's reference anchor (`anchor`/`label`) — the SAME key
+---emit_float emits as the bookmark, so the PAGEREF resolves.
 ---@param entries table Array of {identifier, caption, number, label}
 ---@return string OOXML content
 local function render_entries(entries)
@@ -64,10 +65,11 @@ local function generate(data, spec_id, options)
     end
 
     -- Fallback: query DB (should not happen after view_materializer runs).
-    -- Use syntax_key as the emitted bookmark identifier.
+    -- The PAGEREF anchor MUST equal the bookmark emit_float emits
+    -- (`float.anchor or float.label`) -- NOT the raw syntax_key, which would dangle.
     local charts = data:query_all([[
-        SELECT f.syntax_key AS identifier, f.caption, f.number,
-               f.syntax_key AS label
+        SELECT COALESCE(f.anchor, f.label) AS identifier, f.caption, f.number,
+               f.label AS label
         FROM spec_floats f
         WHERE f.specification_ref = :spec_id
           AND f.type_ref = 'CHART'

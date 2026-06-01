@@ -18,7 +18,8 @@ local function generate_auto_lof()
 end
 
 ---Render LOF entries to OOXML (pure function, no DB access).
----`identifier` is the canonical float key used by emitted bookmarks (`syntax_key`).
+---`identifier` is the float's reference anchor (`anchor`/`label`) — the SAME key
+---emit_float emits as the bookmark, so the PAGEREF resolves.
 ---@param entries table Array of {identifier, caption, number, label}
 ---@return string OOXML content
 local function render_entries(entries)
@@ -65,11 +66,12 @@ local function generate(data, spec_id, options)
 
     -- Fallback: query DB (should not happen after view_materializer runs)
     -- Query floats with counter_group = 'FIGURE' (includes FIGURE, PLANTUML, etc.).
-    -- Use syntax_key as the bookmark/identifier because the current schema no
-    -- longer exposes anchor/label columns on spec_floats.
+    -- The PAGEREF anchor MUST equal the bookmark emit_float emits, which names it
+    -- `float.anchor or float.label` (the HTML-safe anchor, e.g. "fig-teste-imagem")
+    -- -- NOT the raw syntax_key (e.g. "fig:teste-imagem"), which would dangle.
     local figures = data:query_all([[
-        SELECT f.syntax_key AS identifier, f.caption, f.number,
-               f.syntax_key AS label
+        SELECT COALESCE(f.anchor, f.label) AS identifier, f.caption, f.number,
+               f.label AS label
         FROM spec_floats f
         JOIN spec_float_types ft ON f.type_ref = ft.identifier
         WHERE f.specification_ref = :spec_id

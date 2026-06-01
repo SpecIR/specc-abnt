@@ -18,7 +18,8 @@ local function generate_auto_lot()
 end
 
 ---Render LOT entries to OOXML (pure function, no DB access).
----`identifier` is the canonical float key used by emitted bookmarks (`syntax_key`).
+---`identifier` is the float's reference anchor (`anchor`/`label`) — the SAME key
+---emit_float emits as the bookmark, so the PAGEREF resolves.
 ---@param entries table Array of {identifier, caption, number, label}
 ---@return string OOXML content
 local function render_entries(entries)
@@ -65,10 +66,12 @@ local function generate(data, spec_id, options)
 
     -- Fallback: query DB (should not happen after view_materializer runs)
     -- Query the TABLE counter group so future table-like float types are also
-    -- included. Use syntax_key as the emitted bookmark identifier.
+    -- included. The PAGEREF anchor MUST equal the bookmark emit_float emits
+    -- (`float.anchor or float.label`, e.g. "tab-teste-tabela") -- NOT the raw
+    -- syntax_key (e.g. "csv:teste-tabela"), which would dangle.
     local tables = data:query_all([[
-        SELECT f.syntax_key AS identifier, f.caption, f.number,
-               f.syntax_key AS label
+        SELECT COALESCE(f.anchor, f.label) AS identifier, f.caption, f.number,
+               f.label AS label
         FROM spec_floats f
         JOIN spec_float_types ft ON f.type_ref = ft.identifier
         WHERE f.specification_ref = :spec_id
