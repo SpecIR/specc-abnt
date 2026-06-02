@@ -463,6 +463,26 @@ return {
         },
 
         {
+            id = "CoverImageTitle",
+            name = "Cover Image Title",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18, bold = true, all_caps = true, color = "0E4565" },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "center",
+        },
+
+        {
+            id = "CoverImageAuthor",
+            name = "Cover Image Author",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18, bold = true, color = "0E4565" },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "left",
+        },
+
+        {
             id = "CoverLocation",
             name = "Cover Location",
             based_on = "Normal",
@@ -958,6 +978,7 @@ return {
         source_self_text = "O autor",
         source_template = "Fonte: %s",
         source_style = "Source",
+        source_default = "self",
         caption_positions = {
             FIGURE = 'before',
             CHART = 'before',

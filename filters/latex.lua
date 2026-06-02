@@ -319,6 +319,18 @@ end
 ---@param div table Pandoc Div
 ---@return table|nil Modified element or nil
 function Div(div)
+    -- ABNT source attribution: render Div with custom-style="Source"/"FigureSource"/"TableSource"
+    -- as centered small text. Pandoc's LaTeX writer ignores custom-style otherwise.
+    local custom_style = div.attributes and div.attributes["custom-style"]
+    if custom_style == "Source" or custom_style == "FigureSource" or custom_style == "TableSource" then
+        local result = { pandoc.RawBlock("latex", "\\begin{center}\\small") }
+        for _, b in ipairs(div.content) do
+            table.insert(result, b)
+        end
+        table.insert(result, pandoc.RawBlock("latex", "\\end{center}"))
+        return result
+    end
+
     local classes = get_classes(div)
 
     for _, class in ipairs(classes) do

@@ -354,6 +354,10 @@ local SEMANTIC_CLASS_MAP = {
     ["cover-author"]      = { style = "CoverAuthor", uppercase = false },
     ["cover-nature"]      = { style = "CoverNature", uppercase = false },
     ["cover-advisor"]     = { style = "CoverAdvisor", uppercase = false },
+    ["cover-image-title"]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
+    ["cover-image-author"] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
+    ["cover-icmc-title"]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
+    ["cover-icmc-author"] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
     -- Position city at ~0.76 inches from bottom (1100 twips)
     ["cover-location"]    = { style = "CoverLocation", uppercase = false, position_from_bottom = 1100 },
     -- Position year at ~0.42 inches from bottom (600 twips)
@@ -609,6 +613,11 @@ local function convert_specdown_block(block, log)
     elseif marker_type == "float-position-end" then
         -- End marker for postprocessor
         return pandoc.RawBlock("openxml", '<!-- specdown:float-position-end -->')
+    elseif marker_type == "abnt-cover-background" then
+        return pandoc.RawBlock("openxml", '<!-- specdown:abnt-cover-background -->')
+    elseif marker_type == "abnt-full-page" then
+        return pandoc.RawBlock("openxml",
+            string.format('<!-- specdown:abnt-full-page:%s -->', value or ""))
     else
         if log then log.debug('[FILTER/DOCX/ABNT] Unknown marker: %s', text) end
         return {}  -- Remove unknown markers
