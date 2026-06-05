@@ -7,6 +7,7 @@
 ---  - RawBlock("specdown", "vertical-space:NNNN") for spacing (twips)
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 local function render_body(ctx)
     -- One node-construction rule for this file: the ctx-provided pandoc, same as
@@ -50,8 +51,8 @@ local function render_body(ctx)
     local use_cover_image = docx.cover_image ~= false and docx.use_cover_image ~= false
     if ctx.format == "docx" and use_cover_image then
         table.insert(blocks, pandoc.RawBlock("speccompiler", "abnt-cover-background"))
-        if title then table.insert(blocks, semantic_div(title, "cover-image-title")) end
-        if author then table.insert(blocks, semantic_div(author, "cover-image-author")) end
+        if title then table.insert(blocks, semantic_div(title, classes.COVER_IMAGE_TITLE)) end
+        if author then table.insert(blocks, semantic_div(author, classes.COVER_IMAGE_AUTHOR)) end
         return blocks
     end
 
@@ -73,19 +74,19 @@ local function render_body(ctx)
     table.insert(blocks, vertical_space(144))
 
     -- Author at top
-    if author then table.insert(blocks, semantic_div(author, "cover-author")) end
+    if author then table.insert(blocks, semantic_div(author, classes.COVER_AUTHOR)) end
 
     -- Vertical space to position title (~3.3 inches = 4752 twips)
     table.insert(blocks, vertical_space(4752))
 
     -- Title in middle area (22pt font)
-    if title then table.insert(blocks, semantic_div(title, "cover-title")) end
-    if subtitle then table.insert(blocks, semantic_div(subtitle, "cover-subtitle")) end
+    if title then table.insert(blocks, semantic_div(title, classes.COVER_TITLE)) end
+    if subtitle then table.insert(blocks, semantic_div(subtitle, classes.COVER_SUBTITLE)) end
 
     -- City/Year - absolutely positioned from page bottom by DOCX filter
     -- No vertical space needed - they will be anchored to page bottom
-    if city then table.insert(blocks, semantic_div(city, "cover-location")) end
-    if year then table.insert(blocks, semantic_div(year, "cover-year")) end
+    if city then table.insert(blocks, semantic_div(city, classes.COVER_LOCATION)) end
+    if year then table.insert(blocks, semantic_div(year, classes.COVER_YEAR)) end
 
     return blocks
 end
@@ -99,8 +100,6 @@ return {
         extends = "PRE_TEXTUAL",
         is_required = true,
         implicit_aliases = { "Capa", "Cover", "Portada" },
-        header_style_id = "",
-        body_style_id = nil
     },
     hooks = {
         render = function(ctx)

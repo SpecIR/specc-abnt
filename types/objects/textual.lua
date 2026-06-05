@@ -8,8 +8,6 @@ return {
         long_name = "Textual Element",
         description = "Base type for ABNT textual elements (elementos textuais)",
         extends = "SECTION",
-        header_style_id = "Heading1",
-        body_style_id = "Normal"
     },
     hooks = {}
 }

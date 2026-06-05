@@ -10,8 +10,6 @@ return {
         description = "Errata sheet - ABNT NBR 14724:2011",
         extends = "PRE_TEXTUAL",
         implicit_aliases = { "Errata", "Errata Sheet", "Folha de Errata" },
-        header_style_id = "UnnumberedHeading",
-        body_style_id = "BodyText"
     },
     hooks = {}
 }

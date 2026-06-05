@@ -17,6 +17,7 @@
 ---@license MIT
 
 local xml = require("infra.format.xml")
+local classes = require("models.abnt.shared.semantic_classes")
 
 local M = {}
 
@@ -347,39 +348,39 @@ end
 local SEMANTIC_CLASS_MAP = {
     -- Cover page elements
     -- position_from_bottom: absolute position in twips from bottom margin
-    ["cover-institution"] = { style = "CoverInstitution", uppercase = true },
-    ["cover-department"]  = { style = "CoverDepartment", uppercase = false },
-    ["cover-title"]       = { style = "CoverTitle", uppercase = true },
-    ["cover-subtitle"]    = { style = "CoverSubtitle", uppercase = false },
-    ["cover-author"]      = { style = "CoverAuthor", uppercase = false },
-    ["cover-nature"]      = { style = "CoverNature", uppercase = false },
-    ["cover-advisor"]     = { style = "CoverAdvisor", uppercase = false },
-    ["cover-image-title"]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
-    ["cover-image-author"] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
-    ["cover-icmc-title"]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
-    ["cover-icmc-author"] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
+    [classes.COVER_INSTITUTION] = { style = "CoverInstitution", uppercase = true },
+    [classes.COVER_DEPARTMENT]  = { style = "CoverDepartment", uppercase = false },
+    [classes.COVER_TITLE]       = { style = "CoverTitle", uppercase = true },
+    [classes.COVER_SUBTITLE]    = { style = "CoverSubtitle", uppercase = false },
+    [classes.COVER_AUTHOR]      = { style = "CoverAuthor", uppercase = false },
+    [classes.COVER_NATURE]      = { style = "CoverNature", uppercase = false },
+    [classes.COVER_ADVISOR]     = { style = "CoverAdvisor", uppercase = false },
+    [classes.COVER_IMAGE_TITLE]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
+    [classes.COVER_IMAGE_AUTHOR] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
+    [classes.COVER_ICMC_TITLE]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
+    [classes.COVER_ICMC_AUTHOR] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
     -- Position city at ~0.76 inches from bottom (1100 twips)
-    ["cover-location"]    = { style = "CoverLocation", uppercase = false, position_from_bottom = 1100 },
+    [classes.COVER_LOCATION]    = { style = "CoverLocation", uppercase = false, position_from_bottom = 1100 },
     -- Position year at ~0.42 inches from bottom (600 twips)
-    ["cover-year"]        = { style = "CoverYear", uppercase = false, position_from_bottom = 600 },
+    [classes.COVER_YEAR]        = { style = "CoverYear", uppercase = false, position_from_bottom = 600 },
 
     -- Title page elements
-    ["titlepage-author"]      = { style = "TitlePageAuthor", uppercase = false },
-    ["titlepage-title"]       = { style = "TitlePageTitle", uppercase = true },
-    ["titlepage-subtitle"]    = { style = "TitlePageSubtitle", uppercase = false },
-    ["titlepage-nature"]      = { style = "TitlePageNature", uppercase = false },
-    ["titlepage-institution"] = { style = "TitlePageInstitution", uppercase = false },
-    ["titlepage-advisor"]     = { style = "TitlePageAdvisor", uppercase = false },
+    [classes.TITLEPAGE_AUTHOR]      = { style = "TitlePageAuthor", uppercase = false },
+    [classes.TITLEPAGE_TITLE]       = { style = "TitlePageTitle", uppercase = true },
+    [classes.TITLEPAGE_SUBTITLE]    = { style = "TitlePageSubtitle", uppercase = false },
+    [classes.TITLEPAGE_NATURE]      = { style = "TitlePageNature", uppercase = false },
+    [classes.TITLEPAGE_INSTITUTION] = { style = "TitlePageInstitution", uppercase = false },
+    [classes.TITLEPAGE_ADVISOR]     = { style = "TitlePageAdvisor", uppercase = false },
     -- Position city at ~0.76 inches from bottom (1100 twips) - same as cover
-    ["titlepage-location"]    = { style = "TitlePageLocation", uppercase = false, position_from_bottom = 1100 },
+    [classes.TITLEPAGE_LOCATION]    = { style = "TitlePageLocation", uppercase = false, position_from_bottom = 1100 },
     -- Position year at ~0.42 inches from bottom (600 twips) - same as cover
-    ["titlepage-year"]        = { style = "TitlePageYear", uppercase = false, position_from_bottom = 600 },
+    [classes.TITLEPAGE_YEAR]        = { style = "TitlePageYear", uppercase = false, position_from_bottom = 600 },
 
     -- Pre-textual elements
-    ["dedication"]         = { style = "Dedication", uppercase = false },
-    ["epigraph"]           = { style = "Epigraph", uppercase = false },
-    ["unnumbered-heading"] = { style = "UnnumberedHeading", uppercase = false },
-    ["toc-heading"]        = { style = "TOCHeading", uppercase = false },
+    [classes.DEDICATION]         = { style = "Dedication", uppercase = false },
+    [classes.EPIGRAPH]           = { style = "Epigraph", uppercase = false },
+    [classes.UNNUMBERED_HEADING] = { style = "UnnumberedHeading", uppercase = false },
+    [classes.TOC_HEADING]        = { style = "TOCHeading", uppercase = false },
     ["approval-page-placeholder"] = { style = "ApprovalPagePlaceholder", uppercase = false, position_from_top = 6500, position_width = 9000 },
     ["catalog-sheet-placeholder"] = { style = "CatalogSheetPlaceholder", uppercase = false, position_from_top = 1100, position_width = 7000, position_x = 1280 },
 }

@@ -15,7 +15,6 @@ return {
             "Indice Remissivo",
             "Index"
         },
-        body_style_id = "Index"
     },
     hooks = {}
 }

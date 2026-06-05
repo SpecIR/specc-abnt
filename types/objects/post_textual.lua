@@ -8,8 +8,6 @@ return {
         long_name = "Post-textual Element",
         description = "Base type for ABNT post-textual elements (elementos pos-textuais)",
         extends = "SECTION",
-        header_style_id = "UnnumberedHeading",
-        body_style_id = "Normal"
     },
     hooks = {}
 }

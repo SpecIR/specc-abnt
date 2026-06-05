@@ -3,6 +3,7 @@
 
 local render_utils = require("pipeline.shared.render_utils")
 local lists = require("models.abnt.shared.pretextual_lists")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -14,7 +15,6 @@ return {
         implicit_aliases = { "Sumário", "Sumario", "Table of Contents", "TOC", "Contents" },
         numbered = false,
         section_type = "pretextual",
-        header_style_id = "TOCHeading",
         starts_on = "next"
     },
     hooks = {
@@ -28,7 +28,7 @@ return {
             -- Uses TOCHeading to prevent TOC header from appearing in the TOC itself
             local title = "SUMÁRIO"
             local header_div = ctx.pandoc.Div({ctx.pandoc.Para({ctx.pandoc.Str(title)})})
-            header_div.classes = {"toc-heading"}
+            header_div.classes = {classes.TOC_HEADING}
             render_utils.add_header_blocks(blocks, { header_div })
 
             -- Body: Sumário (native Word auto-TOC field)

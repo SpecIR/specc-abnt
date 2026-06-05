@@ -12,7 +12,6 @@ return {
         counter_group = "FIGURE",     -- Shares numbering with FIGURE
         aliases = { "puml", "uml", "diagrama" },
         needs_external_render = true,
-        style_id = "PLANTUML",
     },
     hooks = {},
 }

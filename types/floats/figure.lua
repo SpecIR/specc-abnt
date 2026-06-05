@@ -11,7 +11,6 @@ return {
         caption_format = "Figura",
         counter_group = "FIGURE",
         aliases = { "fig", "imagem", "ilustracao" },
-        style_id = "FIGURE",
     },
     hooks = {},
 }

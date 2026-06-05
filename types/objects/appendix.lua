@@ -3,6 +3,7 @@
 ---Uses letter numbering: APENDICE A, APENDICE B, etc.
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -12,7 +13,6 @@ return {
         description = "Apendice - appendix with letter numbering (ABNT)",
         extends = "POST_TEXTUAL",
         implicit_aliases = { "Apêndice", "Apendice", "Appendix" },
-        header_style_id = "AppendixHeading",
         starts_on = "next"
     },
     hooks = {
@@ -44,8 +44,8 @@ return {
 
             -- Header
             local header_div = ctx.pandoc.Div({ctx.pandoc.Para({ctx.pandoc.Str(full_title)})})
-            header_div.classes = {"unnumbered-heading"}
-            header_div.attr = ctx.pandoc.Attr("", {"unnumbered-heading"}, {["custom-style"] = "AppendixHeading"})
+            header_div.classes = {classes.UNNUMBERED_HEADING}
+            header_div.attr = ctx.pandoc.Attr("", {classes.UNNUMBERED_HEADING}, {["custom-style"] = "AppendixHeading"})
             render_utils.add_header_blocks(blocks, { header_div })
 
             -- Body: include original content blocks

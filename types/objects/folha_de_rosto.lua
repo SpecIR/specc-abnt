@@ -4,6 +4,7 @@
 ---Uses semantic markers converted by format-specific filters.
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 -- Semantic helpers
 local function semantic_div(text, class)
@@ -25,8 +26,6 @@ return {
         extends = "PRE_TEXTUAL",
         is_required = true,
         implicit_aliases = { "Folha de Rosto", "Folha de rosto", "Title Page", "Title page" },
-        header_style_id = "",
-        body_style_id = nil,
         starts_on = "next"  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
     },
     hooks = {
@@ -80,33 +79,33 @@ return {
             local body_blocks = {}
 
             -- Author at top
-            if author then table.insert(body_blocks, semantic_div(author, "titlepage-author")) end
+            if author then table.insert(body_blocks, semantic_div(author, classes.TITLEPAGE_AUTHOR)) end
 
             -- Space before title (~2.5 inches = 3600 twips) - matching abntex2 \vfill distribution
             table.insert(body_blocks, vertical_space(3600))
 
             -- Title
-            if title then table.insert(body_blocks, semantic_div(title, "titlepage-title")) end
-            if subtitle then table.insert(body_blocks, semantic_div(subtitle, "titlepage-subtitle")) end
+            if title then table.insert(body_blocks, semantic_div(title, classes.TITLEPAGE_TITLE)) end
+            if subtitle then table.insert(body_blocks, semantic_div(subtitle, classes.TITLEPAGE_SUBTITLE)) end
 
             -- Space before nature (~1.5 inch = 2160 twips)
             table.insert(body_blocks, vertical_space(2160))
 
             -- Nature/Preâmbulo (right-aligned with indent)
-            if nature then table.insert(body_blocks, semantic_div(nature, "titlepage-nature")) end
+            if nature then table.insert(body_blocks, semantic_div(nature, classes.TITLEPAGE_NATURE)) end
 
             -- Space before advisor (~1 inch = 1440 twips)
             -- Note: abntex2 puts orientador directly under preambulo without institution in between
             table.insert(body_blocks, vertical_space(1440))
 
             -- Advisor (orientador appears left-aligned/centered in abntex2, not right-indented)
-            if advisor then table.insert(body_blocks, semantic_div("Orientador: " .. advisor, "titlepage-advisor")) end
-            if coadvisor then table.insert(body_blocks, semantic_div("Coorientador: " .. coadvisor, "titlepage-advisor")) end
+            if advisor then table.insert(body_blocks, semantic_div("Orientador: " .. advisor, classes.TITLEPAGE_ADVISOR)) end
+            if coadvisor then table.insert(body_blocks, semantic_div("Coorientador: " .. coadvisor, classes.TITLEPAGE_ADVISOR)) end
 
             -- Location and year at bottom - use absolute positioning like cover page
             -- These will be positioned from page bottom by the DOCX filter
-            if city then table.insert(body_blocks, semantic_div(city, "titlepage-location")) end
-            if year then table.insert(body_blocks, semantic_div(year, "titlepage-year")) end
+            if city then table.insert(body_blocks, semantic_div(city, classes.TITLEPAGE_LOCATION)) end
+            if year then table.insert(body_blocks, semantic_div(year, classes.TITLEPAGE_YEAR)) end
 
             render_utils.add_blocks(blocks, body_blocks)
 

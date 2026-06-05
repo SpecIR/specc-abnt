@@ -59,8 +59,6 @@ return {
             "Approval Page",
             "Approval"
         },
-        header_style_id = "",  -- No visible header - uses custom OOXML layout
-        body_style_id = nil,
         attributes = {
             { name = "approval_date", type = "STRING" },
             { name = "examiner", type = "STRING" },

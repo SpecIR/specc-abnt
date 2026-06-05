@@ -3,6 +3,7 @@
 ---Uses letter numbering: ANEXO A, ANEXO B, etc.
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -12,7 +13,6 @@ return {
         description = "Anexo - annex with letter numbering (ABNT)",
         extends = "POST_TEXTUAL",
         implicit_aliases = { "Anexo", "Annex" },
-        header_style_id = "AnnexHeading",
         starts_on = "next"
     },
     hooks = {
@@ -44,8 +44,8 @@ return {
 
             -- Header
             local header_div = ctx.pandoc.Div({ctx.pandoc.Para({ctx.pandoc.Str(full_title)})})
-            header_div.classes = {"unnumbered-heading"}
-            header_div.attr = ctx.pandoc.Attr("", {"unnumbered-heading"}, {["custom-style"] = "AnnexHeading"})
+            header_div.classes = {classes.UNNUMBERED_HEADING}
+            header_div.attr = ctx.pandoc.Attr("", {classes.UNNUMBERED_HEADING}, {["custom-style"] = "AnnexHeading"})
             render_utils.add_header_blocks(blocks, { header_div })
 
             -- Body: include original content blocks

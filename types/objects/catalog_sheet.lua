@@ -58,8 +58,6 @@ return {
             "Catalog Sheet",
             "Cataloging Sheet"
         },
-        header_style_id = "",  -- No visible header
-        body_style_id = nil,
         attributes = {
             { name = "pdf_path", type = "STRING" }
         }

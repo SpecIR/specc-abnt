@@ -3,6 +3,7 @@
 
 local render_utils = require("pipeline.shared.render_utils")
 local lists = require("models.abnt.shared.pretextual_lists")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -19,7 +20,6 @@ return {
         },
         numbered = false,
         section_type = "pretextual",
-        header_style_id = "UnnumberedHeading",
         starts_on = "next"
     },
     hooks = {
@@ -32,7 +32,7 @@ return {
             -- Header: "LISTA DE FIGURAS"
             local title = "LISTA DE FIGURAS"
             local header_div = ctx.pandoc.Div({ctx.pandoc.Para({ctx.pandoc.Str(title)})})
-            header_div.classes = {"unnumbered-heading"}
+            header_div.classes = {classes.UNNUMBERED_HEADING}
             render_utils.add_header_blocks(blocks, { header_div })
 
             -- Body: Lista de Figuras (PAGEREF entries)

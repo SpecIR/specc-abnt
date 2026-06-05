@@ -10,8 +10,6 @@ return {
         extends = "SECTION",
         numbered = false,
         section_type = "pretextual",
-        header_style_id = "UnnumberedHeading",
-        body_style_id = "Normal",
         starts_on = "next"  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
     },
     hooks = {}

@@ -4,6 +4,7 @@
 ---Uses semantic markers converted by format-specific filters.
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -15,7 +16,6 @@ return {
         implicit_aliases = { "Agradecimentos", "Acknowledgments", "Acknowledgements" },
         numbered = false,
         section_type = "pretextual",
-        header_style_id = "UnnumberedHeading",
         starts_on = "next"  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
     },
     hooks = {
@@ -29,7 +29,7 @@ return {
             -- Header
             local title = obj and obj.title_text or "Agradecimentos"
             local header_div = ctx.pandoc.Div({ctx.pandoc.Para({ctx.pandoc.Str(title:upper())})})
-            header_div.classes = {"unnumbered-heading"}
+            header_div.classes = {classes.UNNUMBERED_HEADING}
             render_utils.add_header_blocks(blocks, { header_div })
 
             -- Body: pass through original blocks (skip headers)

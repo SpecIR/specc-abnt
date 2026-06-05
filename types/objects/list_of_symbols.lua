@@ -13,7 +13,6 @@ return {
             "Lista de Simbolos",
             "List of Symbols"
         },
-        header_style_id = "UnnumberedHeading"
     },
     hooks = {}
 }

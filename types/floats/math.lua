@@ -14,7 +14,6 @@ return {
         aliases = { "math", "eq", "equation", "formula", "equacao", "asciimath" },
         -- Native Pandoc math is produced by the default MATH handler during EMIT.
         needs_external_render = false,
-        style_id = "MATH",
     },
     hooks = {},
 }

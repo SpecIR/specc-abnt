@@ -11,7 +11,6 @@ return {
         caption_format = "Tabela",
         counter_group = "TABLE",
         aliases = { "tab", "csv", "tsv", "list-table" },
-        style_id = "TABLE",
     },
     hooks = {},
 }

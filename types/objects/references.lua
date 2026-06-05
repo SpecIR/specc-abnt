@@ -2,6 +2,7 @@
 ---Per ABNT NBR 6023:2018 - mandatory, bibliography
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -12,8 +13,6 @@ return {
         extends = "POST_TEXTUAL",
         is_required = true,
         implicit_aliases = { "Referências", "Referencias", "References", "Bibliography" },
-        header_style_id = "UnnumberedHeading",
-        body_style_id = "Reference",
         starts_on = "next"
     },
     hooks = {
@@ -26,7 +25,7 @@ return {
             -- Header
             local title = "REFERENCIAS"
             local header_div = ctx.pandoc.Div({ctx.pandoc.Para({ctx.pandoc.Str(title)})})
-            header_div.classes = {"unnumbered-heading"}
+            header_div.classes = {classes.UNNUMBERED_HEADING}
             render_utils.add_header_blocks(blocks, { header_div })
 
             -- Body: refs div placeholder for citeproc

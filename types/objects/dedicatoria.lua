@@ -6,6 +6,7 @@
 ---  - Div with class "dedication" applies Dedication style
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -17,8 +18,6 @@ return {
         implicit_aliases = { "Dedicatória", "Dedicatoria", "Dedication" },
         numbered = false,
         section_type = "pretextual",
-        header_style_id = "",
-        body_style_id = "Dedication",
         starts_on = "next"  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
     },
     hooks = {
@@ -35,7 +34,7 @@ return {
             for _, block in ipairs(ctx.subject.element or {}) do
                 if block.t ~= "Header" then
                     local styled = ctx.pandoc.Div({block})
-                    styled.classes = {"dedication"}
+                    styled.classes = {classes.DEDICATION}
                     table.insert(content_blocks, styled)
                 end
             end

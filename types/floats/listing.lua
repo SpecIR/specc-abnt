@@ -11,7 +11,6 @@ return {
         caption_format = "Quadro",
         counter_group = "LISTING",
         aliases = { "src", "code", "quadro" },
-        style_id = "LISTING",
     },
     hooks = {},
 }

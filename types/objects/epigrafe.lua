@@ -6,6 +6,7 @@
 ---  - Div with class "epigraph" applies Epigraph style
 
 local render_utils = require("pipeline.shared.render_utils")
+local classes = require("models.abnt.shared.semantic_classes")
 
 return {
     kind = "object",
@@ -17,8 +18,6 @@ return {
         implicit_aliases = { "Epígrafe", "Epigrafe", "Epigraph" },
         numbered = false,
         section_type = "pretextual",
-        header_style_id = "",
-        body_style_id = "Epigraph",
         starts_on = "next",  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
         attributes = {
             { name = "author", type = "STRING" }
@@ -38,7 +37,7 @@ return {
             for _, block in ipairs(ctx.subject.element or {}) do
                 if block.t ~= "Header" then
                     local styled = ctx.pandoc.Div({block})
-                    styled.classes = {"epigraph"}
+                    styled.classes = {classes.EPIGRAPH}
                     table.insert(content_blocks, styled)
                 end
             end

@@ -11,6 +11,7 @@
 
 local render_utils = require("pipeline.shared.render_utils")
 local lang = require("models.abnt.types.shared.lang")
+local classes = require("models.abnt.shared.semantic_classes")
 
 ---Get display title based on detected language.
 ---@param title_text string|nil The section title
@@ -34,8 +35,6 @@ return {
         implicit_aliases = { "Resumo", "Abstract", "Resume", "Resumen" },
         numbered = false,
         section_type = "pretextual",
-        header_style_id = "UnnumberedHeading",
-        body_style_id = "Abstract",
         starts_on = "next",  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
         attributes = {
             { name = "keywords", type = "STRING" }
@@ -53,7 +52,7 @@ return {
             local title_text = obj and obj.title_text
             local display_title = get_display_title(title_text)
             local header_div = ctx.pandoc.Div({ctx.pandoc.Para({ctx.pandoc.Str(display_title)})})
-            header_div.classes = {"unnumbered-heading"}
+            header_div.classes = {classes.UNNUMBERED_HEADING}
             render_utils.add_header_blocks(blocks, { header_div })
 
             -- Body: Filter content and apply language-aware styling

@@ -18,7 +18,6 @@ return {
         counter_group = "CHART",      -- Separate counter from FIGURE
         aliases = { "echarts", "echart" },
         needs_external_render = true,
-        style_id = "CHART",
     },
     hooks = {},
 }
