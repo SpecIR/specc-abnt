@@ -1,13 +1,17 @@
-# Build the ABNT document and publish the DOCX as a GitHub release on every
-# push to main.
+# Build the ABNT document and publish the DOCX as a GitHub release.
+#
+# Runs AFTER the "Build, Test, and Publish" workflow finishes on main, so the
+# document is always built with the freshly published ghcr.io/specir/specc-abnt
+# image instead of a stale :latest (the two used to race on a single push).
+# Also runnable on demand via workflow_dispatch.
 #
 # This repository doubles as a TEMPLATE for writing ABNT documents:
 #   1. Fork it (or "Use this template").
 #   2. Write your document in a directory containing a project.yaml
 #      (the default is examples/ — see PROJECT_DIR below).
-#   3. Push to main. This workflow builds the DOCX with the ready-made
-#      ghcr.io/specir/specc-abnt image (no Docker build needed in your fork)
-#      and attaches it to a release.
+#   3. Push to main. Once the image workflow completes, this workflow builds
+#      the DOCX with the ready-made ghcr.io/specir/specc-abnt image (no Docker
+#      build needed in your fork) and attaches it to a release.
 #
 # To extend: change PROJECT_DIR to your document directory, or add more
 # directories to the build step — every *.docx found under <dir>/build/ is
@@ -15,7 +19,10 @@
 name: Publish Document
 
 on:
-  push:
+  # Chain after the image build so the DOCX uses the just-published image.
+  workflow_run:
+    workflows: ["Build, Test, and Publish"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -28,12 +35,19 @@ env:
 
 jobs:
   build-and-release:
+    # On workflow_run, only publish if the image build succeeded. A manual
+    # workflow_dispatch has no workflow_run context, so let it through.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Build the exact commit that produced the image (workflow_run);
+          # fall back to the dispatched ref for manual runs.
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Build document
         run: |
@@ -59,4 +73,4 @@ jobs:
           name: Document build ${{ github.run_number }}
           files: release-artifacts/*
           body: |
-            DOCX built from ${{ github.sha }} by SpecCompiler (ABNT model).
+            DOCX built from ${{ github.event.workflow_run.head_sha || github.sha }} by SpecCompiler (ABNT model).
