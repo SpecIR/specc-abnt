@@ -7,20 +7,14 @@
 ---@module xref_usage
 ---@author SpecDown Team
 
-local M = {}
-
-M.view = {
-    id = "XREF_USAGE",
-    long_name = "Cross-Reference Usage",
-    description = "Cross-reference distribution by target type (Sankey format)",
-}
-
 ---Generate cross-reference usage data.
 ---@param params table Parameters (unused)
 ---@param data DataManager Database instance
 ---@param spec_id string Specification identifier (unused)
 ---@return table result ECharts Sankey format with data/links
-function M.generate(params, data, spec_id)
+local function dataset(dctx)
+    local data = dctx.data
+    local spec_id = dctx.spec_id or "default"
     -- Parse float type from target_text prefix (e.g., "chart:gauss" → "Gráficos")
     local sql = [[
         SELECT
@@ -76,4 +70,14 @@ function M.generate(params, data, spec_id)
     }
 end
 
-return M
+return {
+    kind = "view",
+    schema = {
+        id = "XREF_USAGE",
+        long_name = "Cross-Reference Usage",
+        description = "Cross-reference distribution by target type (Sankey format)",
+    },
+    hooks = {
+        dataset = dataset,
+    },
+}

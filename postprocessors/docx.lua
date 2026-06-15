@@ -524,6 +524,8 @@ end
 -- Header File Creation (via shared header_builder)
 -- ============================================================================
 
+local prepare_pretextual_media
+
 ---Create header XML files in the word/ directory.
 ---This hook is called by the docx postprocessor to create additional parts.
 ---@param temp_dir string Path to the unpacked DOCX directory
@@ -537,6 +539,9 @@ function M.create_additional_parts(temp_dir, log, _config)
         {file = "header4.xml", content = header_builder.build_empty_header()},
     }
     header_builder.write_parts(temp_dir, parts, log)
+    if prepare_pretextual_media then
+        prepare_pretextual_media(temp_dir, log, _config)
+    end
 end
 
 -- ============================================================================
@@ -552,6 +557,275 @@ local A4_MARGINS = {
     top = "1701", right = "1134", bottom = "1134",
     left = "1701", header = "709", footer = "709", gutter = "0",
 }
+
+local A4_EMU = { width = 7560310, height = 10692130 }
+
+local PRETEXTUAL_IMAGES = {
+    cover = {
+        marker = "cover-background",
+        rid = "rIdAbntCover",
+        media = "abnt-cover.png",
+        config_keys = {"cover_image", "cover_background", "icmc_cover_image"},
+        default_asset = "assets/cover.png",
+        disable_keys = {"cover_image", "use_cover_image"},
+    },
+    ["catalog-sheet"] = {
+        marker = "full-page:catalog-sheet",
+        rid = "rIdAbntCatalogSheet",
+        media = "abnt-catalog-sheet.png",
+        config_keys = {"catalog_sheet_pdf", "catalog_pdf", "fichacatalografica_pdf", "catalog_sheet_image", "catalog_sheet_background"},
+        default_asset = "assets/catalog_sheet.png",
+        disable_keys = {"catalog_sheet", "catalog_sheet_image", "use_catalog_sheet_image"},
+    },
+    ["approval-page"] = {
+        marker = "full-page:approval-page",
+        rid = "rIdAbntApprovalPage",
+        media = "abnt-approval-page.png",
+        config_keys = {"approval_page_pdf", "approval_pdf", "folha_de_aprovacao_pdf", "folhadeaprovacao_pdf", "approval_page_image", "approval_page_background"},
+        default_asset = "assets/approval_page.png",
+        disable_keys = {"approval_page", "approval_page_image", "use_approval_page_image"},
+    },
+}
+
+local function docx_config(config)
+    return (config and config.docx) or config or {}
+end
+
+local function shell_quote(path)
+    return "'" .. tostring(path):gsub("'", "'\\''") .. "'"
+end
+
+local function file_exists(path)
+    local f = io.open(path, "rb")
+    if f then
+        f:close()
+        return true
+    end
+    return false
+end
+
+local function read_binary(path)
+    local f = io.open(path, "rb")
+    if not f then return nil end
+    local data = f:read("*a")
+    f:close()
+    return data
+end
+
+local function write_binary(path, data)
+    local f = io.open(path, "wb")
+    if not f then return false end
+    f:write(data)
+    f:close()
+    return true
+end
+
+local function model_root()
+    local source = (debug.getinfo(1, "S").source or ""):gsub("^@", "")
+    return source:gsub("/postprocessors/docx%.lua$", "")
+end
+
+local function resolve_project_path(path, config)
+    if not path or path == "" then return nil end
+    if path == true then return nil end
+    if path:match("^/") then return path end
+    local root = (config and config.project_root) or "."
+    return root .. "/" .. path
+end
+
+local function configured_path(config, item)
+    local docx = docx_config(config)
+    for _, key in ipairs(item.disable_keys or {}) do
+        if docx[key] == false then
+            return nil
+        end
+    end
+    for _, key in ipairs(item.config_keys or {}) do
+        if docx[key] and docx[key] ~= "" then
+            if docx[key] ~= true then
+                return resolve_project_path(docx[key], config)
+            end
+        end
+    end
+    if item.default_asset then
+        local path = model_root() .. "/" .. item.default_asset
+        if file_exists(path) then return path end
+    end
+    return nil
+end
+
+local function register_image_relationships(content, config, log)
+    local doc = xml.parse(content)
+    if not doc or not doc.root then
+        return content
+    end
+
+    local existing = {}
+    for _, kid in ipairs(doc.root.kids or {}) do
+        if kid.name == "Relationship" then
+            local id = xml.get_attr(kid, "Id")
+            if id then existing[id] = true end
+        end
+    end
+
+    local rel_type = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+    local added = 0
+    for _, item in pairs(PRETEXTUAL_IMAGES) do
+        if configured_path(config, item) and not existing[item.rid] then
+            xml.add_child(doc.root, xml.node("Relationship", {
+                Id = item.rid,
+                Type = rel_type,
+                Target = "media/" .. item.media,
+            }))
+            added = added + 1
+        end
+    end
+    if added > 0 then
+        log.debug("[ABNT-PRETEXTUAL] Registered %d pre-textual image relationship(s)", added)
+    end
+
+    return xml.serialize(doc)
+end
+
+local function ensure_image_content_types(content, config)
+    local needs_png = false
+    local needs_jpeg = false
+    for _, item in pairs(PRETEXTUAL_IMAGES) do
+        if configured_path(config, item) then
+            if item.media:match("%.png$") then needs_png = true end
+            if item.media:match("%.jpe?g$") then needs_jpeg = true end
+        end
+    end
+    if needs_png and not content:match('Extension="png"') then
+        content = content:gsub('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>')
+    end
+    if needs_jpeg and not content:match('Extension="jpg"') then
+        content = content:gsub('</Types>', '<Default Extension="jpg" ContentType="image/jpeg"/></Types>')
+    end
+    return content
+end
+
+local function full_page_image_ooxml(rid, alt_text, behind_doc)
+    return xml.serialize_element(xml.node("w:p", {}, {
+        xml.node("w:pPr", {}, {
+            xml.node("w:spacing", {["w:before"] = "0", ["w:after"] = "0", ["w:line"] = "20", ["w:lineRule"] = "exact"}),
+        }),
+        xml.node("w:r", {}, {
+            xml.node("w:drawing", {}, {
+                xml.node("wp:anchor", {
+                    distT = "0", distB = "0", distL = "0", distR = "0",
+                    simplePos = "0", relativeHeight = behind_doc and "0" or "251658240",
+                    behindDoc = behind_doc and "1" or "0",
+                    locked = "0", layoutInCell = "1", allowOverlap = "1",
+                }, {
+                    xml.node("wp:simplePos", {x = "0", y = "0"}),
+                    xml.node("wp:positionH", {relativeFrom = "page"}, {
+                        xml.node("wp:posOffset", {}, {xml.text("0")}),
+                    }),
+                    xml.node("wp:positionV", {relativeFrom = "page"}, {
+                        xml.node("wp:posOffset", {}, {xml.text("0")}),
+                    }),
+                    xml.node("wp:extent", {cx = tostring(A4_EMU.width), cy = tostring(A4_EMU.height)}),
+                    xml.node("wp:wrapNone"),
+                    xml.node("wp:docPr", {id = behind_doc and "9201" or "9202", name = alt_text or ""}),
+                    xml.node("a:graphic", {["xmlns:a"] = "http://schemas.openxmlformats.org/drawingml/2006/main"}, {
+                        xml.node("a:graphicData", {uri = "http://schemas.openxmlformats.org/drawingml/2006/picture"}, {
+                            xml.node("pic:pic", {["xmlns:pic"] = "http://schemas.openxmlformats.org/drawingml/2006/picture"}, {
+                                xml.node("pic:nvPicPr", {}, {
+                                    xml.node("pic:cNvPr", {id = "0", name = alt_text or ""}),
+                                    xml.node("pic:cNvPicPr"),
+                                }),
+                                xml.node("pic:blipFill", {}, {
+                                    xml.node("a:blip", {["r:embed"] = rid}),
+                                    xml.node("a:stretch", {}, {xml.node("a:fillRect")}),
+                                }),
+                                xml.node("pic:spPr", {}, {
+                                    xml.node("a:xfrm", {}, {
+                                        xml.node("a:off", {x = "0", y = "0"}),
+                                        xml.node("a:ext", {cx = tostring(A4_EMU.width), cy = tostring(A4_EMU.height)}),
+                                    }),
+                                    xml.node("a:prstGeom", {prst = "rect"}, {xml.node("a:avLst")}),
+                                }),
+                            }),
+                        }),
+                    }),
+                }),
+            }),
+        }),
+    }))
+end
+
+local function replace_pretextual_markers(content, config, log)
+    if configured_path(config, PRETEXTUAL_IMAGES.cover) then
+        content = content:gsub(
+            '<!%-%- specdown:abnt%-cover%-background %-%->',
+            full_page_image_ooxml(PRETEXTUAL_IMAGES.cover.rid, "ABNT cover background", true)
+        )
+    end
+    if configured_path(config, PRETEXTUAL_IMAGES["catalog-sheet"]) then
+        content = content:gsub(
+            '<!%-%- specdown:abnt%-full%-page:catalog%-sheet %-%->',
+            full_page_image_ooxml(PRETEXTUAL_IMAGES["catalog-sheet"].rid, "Ficha catalografica", false)
+        )
+    end
+    if configured_path(config, PRETEXTUAL_IMAGES["approval-page"]) then
+        content = content:gsub(
+            '<!%-%- specdown:abnt%-full%-page:approval%-page %-%->',
+            full_page_image_ooxml(PRETEXTUAL_IMAGES["approval-page"].rid, "Folha de aprovacao", false)
+        )
+    end
+    log.debug("[ABNT-PRETEXTUAL] Replaced configured pre-textual page marker(s)")
+    return content
+end
+
+local function prepare_media(source, dest, log)
+    if not source or not file_exists(source) then
+        log.warn("[ABNT-PRETEXTUAL] Source not found: %s", tostring(source))
+        return false
+    end
+
+    if source:lower():match("%.pdf$") then
+        local text_cmd = "pdftotext " .. shell_quote(source) .. " - 2>/dev/null"
+        local pipe = io.popen(text_cmd)
+        local text = pipe and pipe:read("*a") or ""
+        if pipe then pipe:close() end
+        if text:match("É possível elaborar a ficha catalográfica")
+            or text:match("ficha catalográfica definitiva")
+            or text:match("Folha de aprovação em conformidade")
+            or text:match("folhadeaprovacao%.pdf") then
+            log.warn("[ABNT-PRETEXTUAL] Configured PDF appears to be a placeholder, not a final document: %s", source)
+        end
+        local dest_base = dest:gsub("%.png$", "")
+        local cmd = "pdftoppm -singlefile -png -r 300 " .. shell_quote(source) .. " " .. shell_quote(dest_base)
+        local ok = os.execute(cmd)
+        if ok == true or ok == 0 then
+            return file_exists(dest)
+        end
+        log.warn("[ABNT-PRETEXTUAL] Failed to convert PDF with pdftoppm: %s", source)
+        return false
+    end
+
+    local data = read_binary(source)
+    if not data then
+        log.warn("[ABNT-PRETEXTUAL] Failed to read image: %s", source)
+        return false
+    end
+    return write_binary(dest, data)
+end
+
+prepare_pretextual_media = function(temp_dir, log, config)
+    local media_dir = temp_dir .. "/word/media"
+    os.execute("mkdir -p " .. shell_quote(media_dir))
+    for _, item in pairs(PRETEXTUAL_IMAGES) do
+        local source = configured_path(config, item)
+        if source then
+            local dest = media_dir .. "/" .. item.media
+            if prepare_media(source, dest, log) then
+                log.debug("[ABNT-PRETEXTUAL] Prepared media/%s", item.media)
+            end
+        end
+    end
+end
 
 ---Build ABNT section config for pre-textual (roman numeral) pages.
 ---Uses empty headers (header3/header4) so no visible page numbers appear.
@@ -714,6 +988,9 @@ function M.process_document(content, _config, log, rels_content)
     -- Center-align figures
     content = M.fix_figures(content, log)
 
+    -- Replace configured cover/catalog/approval markers with full-page drawings.
+    content = replace_pretextual_markers(content, _config, log)
+
     -- Apply Reference style to bibliography entries
     content = bibliography_formatter.format_bibliography(content, ABNT_BIB_CONFIG, log)
 
@@ -762,17 +1039,18 @@ end
 ---@param content string [Content_Types].xml content
 ---@param log table Logger instance
 ---@return string Modified content
-function M.process_content_types(content, log)
-    return header_builder.register_content_types(content, ABNT_HEADER_PARTS, log)
+function M.process_content_types(content, log, config)
+    content = header_builder.register_content_types(content, ABNT_HEADER_PARTS, log)
+    return ensure_image_content_types(content, config)
 end
 
 ---Process document.xml.rels to add header relationships.
 ---@param content string document.xml.rels content
 ---@param log table Logger instance
 ---@return string Modified content
-function M.process_rels(content, log)
+function M.process_rels(content, log, config)
     local result = header_builder.register_relationships(content, ABNT_HEADER_PARTS, log)
-    return result
+    return register_image_relationships(result, config, log)
 end
 
 -- ============================================================================
@@ -789,11 +1067,10 @@ end
 ---@return boolean Success status
 function M.run(path, config, log)
     local template = config.template or "abnt"
-    local docx_config = config.docx or config
     -- For ABNT, we use the default DOCX postprocessor which loads this module
     -- as a template-specific handler
     local default_pp = require("models.default.postprocessors.docx")
-    return default_pp.postprocess(path, template, log, docx_config)
+    return default_pp.postprocess(path, template, log, config)
 end
 
 ---Finalize batch of DOCX files.

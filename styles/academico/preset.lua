@@ -463,6 +463,26 @@ return {
         },
 
         {
+            id = "CoverImageTitle",
+            name = "Cover Image Title",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18, bold = true, all_caps = true, color = "0E4565" },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "center",
+        },
+
+        {
+            id = "CoverImageAuthor",
+            name = "Cover Image Author",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18, bold = true, color = "0E4565" },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "left",
+        },
+
+        {
             id = "CoverLocation",
             name = "Cover Location",
             based_on = "Normal",
@@ -557,6 +577,26 @@ return {
             spacing = { before = 0, after = 0, line = 1.5 },
             indent = { first_line = "0cm" },
             alignment = "center",
+        },
+
+        {
+            id = "ApprovalPagePlaceholder",
+            name = "Approval Page Placeholder",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18 },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "center",
+        },
+
+        {
+            id = "CatalogSheetPlaceholder",
+            name = "Catalog Sheet Placeholder",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 18 },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "justified",
         },
 
         -- ====================================================================
@@ -752,79 +792,6 @@ return {
     -- ========================================================================
     -- Table Styles
     -- ========================================================================
-    table_styles = {
-        -- ABNT Table: horizontal lines only
-        {
-            id = "ABNTTable",
-            name = "ABNT Table",
-            spacing = { before = 0, after = 0 },
-            borders = {
-                top = { style = "single", width = 1, color = "000000" },
-                bottom = { style = "single", width = 1, color = "000000" },
-                left = { style = "none", width = 0, color = "000000" },
-                right = { style = "none", width = 0, color = "000000" },
-                inside_h = { style = "none", width = 0, color = "000000" },
-                inside_v = { style = "none", width = 0, color = "000000" },
-            },
-            cell_margins = {
-                top = "1mm",
-                bottom = "1mm",
-                left = "2mm",
-                right = "2mm",
-            },
-            header_row = {
-                font = { bold = true },
-                borders = {
-                    bottom = { style = "single", width = 1, color = "000000" },
-                },
-            },
-            autofit = true,
-        },
-
-        -- Grid table
-        {
-            id = "TableGrid",
-            name = "Table Grid",
-            spacing = { before = 0, after = 0 },
-            borders = {
-                top = { style = "single", width = 0.5, color = "000000" },
-                bottom = { style = "single", width = 0.5, color = "000000" },
-                left = { style = "single", width = 0.5, color = "000000" },
-                right = { style = "single", width = 0.5, color = "000000" },
-                inside_h = { style = "single", width = 0.5, color = "000000" },
-                inside_v = { style = "single", width = 0.5, color = "000000" },
-            },
-            cell_margins = {
-                top = "1mm",
-                bottom = "1mm",
-                left = "2mm",
-                right = "2mm",
-            },
-            autofit = true,
-        },
-
-        -- Table (Pandoc default)
-        {
-            id = "Table",
-            name = "Table",
-            spacing = { before = 0, after = 0 },
-            borders = {
-                top = { style = "single", width = 0.5, color = "000000" },
-                bottom = { style = "single", width = 0.5, color = "000000" },
-                left = { style = "single", width = 0.5, color = "000000" },
-                right = { style = "single", width = 0.5, color = "000000" },
-                inside_h = { style = "single", width = 0.5, color = "000000" },
-                inside_v = { style = "single", width = 0.5, color = "000000" },
-            },
-            cell_margins = {
-                top = "1mm",
-                bottom = "1mm",
-                left = "2mm",
-                right = "2mm",
-            },
-            autofit = true,
-        },
-    },
 
     -- ========================================================================
     -- Caption Formats (ABNT uses em-dash separator)
@@ -938,6 +905,7 @@ return {
         source_self_text = "O autor",
         source_template = "Fonte: %s",
         source_style = "Source",
+        source_default = "self",
         caption_positions = {
             FIGURE = 'before',
             CHART = 'before',

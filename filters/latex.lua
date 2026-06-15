@@ -14,6 +14,8 @@
 ---@author SpecDown Team
 ---@license MIT
 
+local classes = require("models.abnt.shared.semantic_classes")
+
 local M = {}
 
 -- ============================================================================
@@ -99,35 +101,35 @@ end
 ---not inline content. These are marked as "metadata" type.
 local SEMANTIC_CLASS_MAP = {
     -- Cover page elements (passed to postprocessor via metadata)
-    ["cover-institution"] = { type = "metadata", key = "institution", uppercase = true },
-    ["cover-department"]  = { type = "metadata", key = "department", uppercase = false },
-    ["cover-title"]       = { type = "metadata", key = "title", uppercase = true },
-    ["cover-subtitle"]    = { type = "metadata", key = "subtitle", uppercase = false },
-    ["cover-author"]      = { type = "metadata", key = "author", uppercase = false },
-    ["cover-nature"]      = { type = "metadata", key = "preambulo", uppercase = false },
-    ["cover-advisor"]     = { type = "metadata", key = "advisor", uppercase = false },
-    ["cover-location"]    = { type = "metadata", key = "location", uppercase = false },
-    ["cover-year"]        = { type = "metadata", key = "date", uppercase = false },
+    [classes.COVER_INSTITUTION] = { type = "metadata", key = "institution", uppercase = true },
+    [classes.COVER_DEPARTMENT]  = { type = "metadata", key = "department", uppercase = false },
+    [classes.COVER_TITLE]       = { type = "metadata", key = "title", uppercase = true },
+    [classes.COVER_SUBTITLE]    = { type = "metadata", key = "subtitle", uppercase = false },
+    [classes.COVER_AUTHOR]      = { type = "metadata", key = "author", uppercase = false },
+    [classes.COVER_NATURE]      = { type = "metadata", key = "preambulo", uppercase = false },
+    [classes.COVER_ADVISOR]     = { type = "metadata", key = "advisor", uppercase = false },
+    [classes.COVER_LOCATION]    = { type = "metadata", key = "location", uppercase = false },
+    [classes.COVER_YEAR]        = { type = "metadata", key = "date", uppercase = false },
 
     -- Title page elements (same as cover in abntex2)
-    ["titlepage-author"]   = { type = "metadata", key = "author", uppercase = false },
-    ["titlepage-title"]    = { type = "metadata", key = "title", uppercase = true },
-    ["titlepage-subtitle"] = { type = "metadata", key = "subtitle", uppercase = false },
-    ["titlepage-nature"]   = { type = "metadata", key = "preambulo", uppercase = false },
-    ["titlepage-advisor"]  = { type = "metadata", key = "advisor", uppercase = false },
-    ["titlepage-location"] = { type = "metadata", key = "location", uppercase = false },
-    ["titlepage-year"]     = { type = "metadata", key = "date", uppercase = false },
+    [classes.TITLEPAGE_AUTHOR]   = { type = "metadata", key = "author", uppercase = false },
+    [classes.TITLEPAGE_TITLE]    = { type = "metadata", key = "title", uppercase = true },
+    [classes.TITLEPAGE_SUBTITLE] = { type = "metadata", key = "subtitle", uppercase = false },
+    [classes.TITLEPAGE_NATURE]   = { type = "metadata", key = "preambulo", uppercase = false },
+    [classes.TITLEPAGE_ADVISOR]  = { type = "metadata", key = "advisor", uppercase = false },
+    [classes.TITLEPAGE_LOCATION] = { type = "metadata", key = "location", uppercase = false },
+    [classes.TITLEPAGE_YEAR]     = { type = "metadata", key = "date", uppercase = false },
 
     -- Pre-textual elements (converted to LaTeX environments)
-    ["dedication"]         = { type = "environment", env = "dedicatoria", uppercase = false },
-    ["epigraph"]           = { type = "environment", env = "epigrafe", uppercase = false },
+    [classes.DEDICATION]         = { type = "environment", env = "dedicatoria", uppercase = false },
+    [classes.EPIGRAPH]           = { type = "environment", env = "epigrafe", uppercase = false },
 
     -- Container classes (unwrap content for LaTeX - positioning handled by abntex2)
     ["bottom-aligned"]     = { type = "unwrap", uppercase = false },
 
     -- Structural elements
-    ["unnumbered-heading"] = { type = "command", cmd = "chapter*", uppercase = false },
-    ["toc-heading"]        = { type = "skip", uppercase = false },  -- TOC is auto-generated
+    [classes.UNNUMBERED_HEADING] = { type = "command", cmd = "chapter*", uppercase = false },
+    [classes.TOC_HEADING]        = { type = "skip", uppercase = false },  -- TOC is auto-generated
 }
 
 -- ============================================================================
@@ -288,13 +290,33 @@ end
 ---@param block table Pandoc RawBlock
 ---@return table|nil Modified element or nil
 function RawBlock(block)
-    if block.format ~= "specdown" then
+    if block.format ~= "specdown" and block.format ~= "speccompiler" then
         return nil
     end
 
     local text = block.text
 
-    -- Page break: page-break[:type]
+    -- Float bookmark start: bookmark-start:ID:ANCHOR
+    -- Emit a \label so float cross-references resolve to the same anchor. The
+    -- abnt latex path renders a float cross-reference as Pandoc's \hyperref[anchor]{...}
+    -- (an internal #anchor Link), which is the LaTeX \ref mechanism and resolves
+    -- against \label{anchor} -- NOT \hypertarget (that pairs with \hyperlink only,
+    -- and leaves the \hyperref dangling: "Reference ... undefined"). \phantomsection
+    -- gives the label a correct anchor position; this is exactly what Pandoc emits
+    -- for an internal anchor target. The ANCHOR is float_anchor.ref_anchor
+    -- (float.anchor or float.label), matching the LOF/LOT and inline link targets.
+    local _, anchor = text:match("^bookmark%-start:(%d+):(.+)$")
+    if anchor then
+        return pandoc.RawBlock("latex", string.format("\\phantomsection\\label{%s}", anchor))
+    end
+
+    -- Float bookmark end: bookmark-end:ID -- the hypertarget is zero-width,
+    -- so the end marker has no LaTeX counterpart. Remove it.
+    if text:match("^bookmark%-end:%d+$") then
+        return {}
+    end
+
+    -- Page break: page-break[:type] (type may be "odd" or "even")
     if text:match("^page%-break") then
         local break_type = text:match("^page%-break:(%w+)$") or "next"
         local latex = latex_page_break(break_type)
@@ -310,7 +332,7 @@ function RawBlock(block)
         end
     end
 
-    -- Pass through other specdown markers as comments
+    -- Pass through other markers as comments
     return pandoc.RawBlock("latex", string.format("%% specdown: %s", text))
 end
 
@@ -319,6 +341,18 @@ end
 ---@param div table Pandoc Div
 ---@return table|nil Modified element or nil
 function Div(div)
+    -- ABNT source attribution: render Div with custom-style="Source"/"FigureSource"/"TableSource"
+    -- as centered small text. Pandoc's LaTeX writer ignores custom-style otherwise.
+    local custom_style = div.attributes and div.attributes["custom-style"]
+    if custom_style == "Source" or custom_style == "FigureSource" or custom_style == "TableSource" then
+        local result = { pandoc.RawBlock("latex", "\\begin{center}\\small") }
+        for _, b in ipairs(div.content) do
+            table.insert(result, b)
+        end
+        table.insert(result, pandoc.RawBlock("latex", "\\end{center}"))
+        return result
+    end
+
     local classes = get_classes(div)
 
     for _, class in ipairs(classes) do

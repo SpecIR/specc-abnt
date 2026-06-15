@@ -85,9 +85,9 @@ Spec-IR stores the following first-class entities:
 
 ### A minimal complete example
 
-The concrete syntax remains close to ordinary Markdown, but the active type system gives selected constructs a typed interpretation:
+The concrete syntax remains close to ordinary Markdown, but the active type system gives selected constructs a typed interpretation. The running example below uses a `default + sw_docs` stack because it makes typed relations and proof views explicit:
 
-```src.md:rtf-mini-example{caption="Example using the current sw_docs type system"}
+```src.md:rtf-mini-example{caption="Example using a default plus sw_docs model stack"}
 # SRS: Login Service
 
 > version: 0.1
@@ -127,7 +127,7 @@ Verify the authentication flow works end to end.
 `test_results_matrix:`
 ```
 
-Under the current model, this source yields one specification record, two object records, typed attributes, one float, one inferred `VERIFIES` relation, and one generated view.
+Under that model stack, this source yields one specification record, two object records, typed attributes, one float, one inferred `VERIFIES` relation, and one generated view.
 
 ```list-table:rtf-syntax-to-ir{caption="From current source syntax to Spec-IR"}
 > header-rows: 1
@@ -194,7 +194,7 @@ This limited scope is nevertheless valuable. In many document review processes, 
 
 ## SpecCompiler and the Current Type System
 
-The authoring language accepted by SpecCompiler is defined by the currently loaded type system. In the present repository, that language is implemented by the active `models/default` and `models/sw_docs` definitions.
+The authoring language accepted by SpecCompiler is defined by the currently loaded type system. In this codebase, different loaded model stacks define different source languages. The `default + sw_docs` stack used in the running example below illustrates typed engineering artifacts and inferred relations, while the ABNT stack used to render this report contributes academic-document structure and generated sections such as `LIST_OF_FIGURES`, `LIST_OF_TABLES`, and `SIGLA_LIST`.
 
 ### The type system defines the current language
 
@@ -232,11 +232,11 @@ SpecCompiler does not rely on a fixed, monolithic grammar for engineering docume
 
 The same loading step also registers attribute definitions, datatypes, enum values, and optional handlers. As a result, the language definition is available inside the IR itself rather than being scattered across ad hoc parser branches.
 
-### The current type system loaded by SpecCompiler
+### A representative loaded type system
 
-The active language used in the present repository is layered. The `default` model provides generic document structure and shared mechanisms; the `sw_docs` model extends it with software-documentation types and domain-specific views.
+The engineering configuration used in the running example is layered. The `default` model provides generic document structure and shared mechanisms; the `sw_docs` model extends it with software-documentation types and domain-specific views.
 
-```list-table:rtf-current-type-system{caption="Representative entries in the current type system"}
+```list-table:rtf-current-type-system{caption="Representative entries in a default plus sw_docs configuration"}
 > header-rows: 1
 > aligns: l,l,l
 
@@ -260,13 +260,13 @@ The active language used in the present repository is layered. The `default` mod
   - `TRACEABILITY_MATRIX`, `TEST_RESULTS_MATRIX`, `TEST_EXECUTION_MATRIX`, `REQUIREMENTS_SUMMARY`, `COVERAGE_SUMMARY`, `CSC_DECOMPOSITION`
 ```
 
-This layering is significant for language design. The default model establishes stable structural categories such as `SPEC`, `SECTION`, `FIGURE`, or `TOC`, while the domain model introduces engineering-specific types such as `HLR`, `VC`, and `VERIFIES` without modifying the compiler core.
+This layering is significant for language design. The default model establishes stable structural categories such as `SPEC`, `SECTION`, `FIGURE`, or `TOC`, while the `sw_docs` domain model introduces engineering-specific types such as `HLR`, `VC`, and `VERIFIES` without modifying the compiler core. The same mechanism is what allows the ABNT model to add academic-document objects and views on top of the same compiler runtime.
 
 ### Controlled extension through inheritance
 
 The current type system uses single inheritance through the `extends` field. This allows the language to grow by specialization while preserving a compact core. Selected examples illustrate the mechanism:
 
-```list-table:rtf-inheritance-examples{caption="Selected type definitions in the current type system"}
+```list-table:rtf-inheritance-examples{caption="Selected type definitions in the default plus sw_docs example stack"}
 > header-rows: 1
 > aligns: l,l,l
 
@@ -290,7 +290,7 @@ The current type system uses single inheritance through the `extends` field. Thi
   - relation inferred from `VC.traceability` links targeting `HLR` or `LLR`
 ```
 
-Two details are technically important. First, inheritance propagates attributes into the child type environment, so an `HLR` inherits `status` from `TRACEABLE` even though it also defines its own local attributes such as `priority`. Second, relation typing is driven by the loaded type system rather than by explicit markup in the source. For example, a `traceability` attribute in a `VC` that points to an `HLR` is compiled as a `VERIFIES` relation because that rule is declared in the relation type tables.
+Two details are technically important in this example configuration. First, inheritance propagates attributes into the child type environment, so an `HLR` inherits `status` from `TRACEABLE` even though it also defines its own local attributes such as `priority`. Second, relation typing is driven by the loaded type system rather than by explicit markup in the source. For example, a `traceability` attribute in a `VC` that points to an `HLR` is compiled as a `VERIFIES` relation because that rule is declared in the relation type tables.
 
 ### How SpecCompiler turns the current type system into Spec-IR
 

@@ -15,11 +15,10 @@ logging:
   color: true
 
 bibliography: references.bib
-csl: abnt.csl
 
 outputs:
   - format: docx
-    path: build/{spec_id}.docx
+    path: "{spec_id}.docx"
   - format: latex
-    path: build/{spec_id}.tex
+    path: "{spec_id}.tex"
     top_level_division: chapter

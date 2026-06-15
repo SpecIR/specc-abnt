@@ -17,6 +17,7 @@
 ---@license MIT
 
 local xml = require("infra.format.xml")
+local classes = require("models.abnt.shared.semantic_classes")
 
 local M = {}
 
@@ -195,15 +196,30 @@ end
 ---@param style string Style ID
 ---@return string OOXML
 local function ooxml_styled_para(text, style)
-    return xml.serialize_element(xml.node("w:p", {}, {
+    local runs = {}
+    local first = true
+    for line in (tostring(text or "") .. "\n"):gmatch("(.-)\n") do
+        if not first then
+            runs[#runs + 1] = xml.node("w:r", {}, { xml.node("w:br") })
+        end
+        if line ~= "" then
+            runs[#runs + 1] = xml.node("w:r", {}, {
+                xml.node("w:t", {["xml:space"] = "preserve"}, {xml.text(line)})
+            })
+        end
+        first = false
+    end
+
+    local children = {
         xml.node("w:pPr", {}, {
             xml.node("w:pStyle", {["w:val"] = style})
-        }),
-        xml.node("w:r", {}, {
-            xml.node("w:t", {}, {xml.text(text)})
         })
-    }))
+    }
+    append_all(children, runs)
+    return xml.serialize_element(xml.node("w:p", {}, children))
 end
+
+local ooxml_styled_para_positioned_top
 
 ---Generate styled paragraph with absolute positioning from page bottom.
 ---Uses w:framePr to position content at a fixed distance from page bottom.
@@ -215,21 +231,55 @@ local function ooxml_styled_para_positioned(text, style, twips_from_bottom)
     -- Calculate position from page top
     -- position = page_height - bottom_margin - distance_from_bottom
     local position_from_top = A4_HEIGHT - MARGIN_BOTTOM - twips_from_bottom
-    return xml.serialize_element(xml.node("w:p", {}, {
+    return ooxml_styled_para_positioned_top(text, style, position_from_top)
+end
+
+---Generate styled paragraph with absolute positioning from page top.
+---@param text string The text content
+---@param style string The paragraph style name
+---@param position_from_top number Distance from page top in twips
+---@param width number|nil Optional frame width in twips
+---@param x number|nil Optional frame X position in twips
+---@return string OOXML
+ooxml_styled_para_positioned_top = function(text, style, position_from_top, width, x)
+    local runs = {}
+    local first = true
+    for line in (tostring(text or "") .. "\n"):gmatch("(.-)\n") do
+        if not first then
+            runs[#runs + 1] = xml.node("w:r", {}, { xml.node("w:br") })
+end
+        if line ~= "" then
+            runs[#runs + 1] = xml.node("w:r", {}, {
+                xml.node("w:t", {["xml:space"] = "preserve"}, {xml.text(line)})
+            })
+        end
+        first = false
+    end
+
+    local frame_attrs = {
+        ["w:vAnchor"] = "page",
+        ["w:y"] = tostring(position_from_top),
+        ["w:wrap"] = "none",
+    }
+    if x then
+        frame_attrs["w:hAnchor"] = "page"
+        frame_attrs["w:x"] = tostring(x)
+    else
+        frame_attrs["w:hAnchor"] = "margin"
+        frame_attrs["w:xAlign"] = "center"
+    end
+    if width then
+        frame_attrs["w:w"] = tostring(width)
+    end
+
+    local children = {
         xml.node("w:pPr", {}, {
             xml.node("w:pStyle", {["w:val"] = style}),
-            xml.node("w:framePr", {
-                ["w:vAnchor"] = "page",
-                ["w:hAnchor"] = "margin",
-                ["w:xAlign"] = "center",
-                ["w:y"] = tostring(position_from_top),
-                ["w:wrap"] = "none",
-            }),
-        }),
-        xml.node("w:r", {}, {
-            xml.node("w:t", {}, {xml.text(text)})
+            xml.node("w:framePr", frame_attrs),
         })
-    }))
+    }
+    append_all(children, runs)
+    return xml.serialize_element(xml.node("w:p", {}, children))
 end
 
 ---Generate table wrapper start for vertical alignment (vAlign workaround).
@@ -272,7 +322,7 @@ local function ooxml_table_valign_start(height)
         }),
     }))
     local trPr = xml.serialize_element(xml.node("w:trPr", {}, {
-        xml.node("w:trHeight", {["w:val"] = tostring(height), ["w:hRule"] = "atLeast"}),
+        xml.node("w:trHeight", {["w:val"] = tostring(height), ["w:hRule"] = "exact"}),
     }))
     local tcPr = xml.serialize_element(xml.node("w:tcPr", {}, {
         xml.node("w:tcW", {["w:w"] = "5000", ["w:type"] = "pct"}),
@@ -298,37 +348,41 @@ end
 local SEMANTIC_CLASS_MAP = {
     -- Cover page elements
     -- position_from_bottom: absolute position in twips from bottom margin
-    ["cover-institution"] = { style = "CoverInstitution", uppercase = true },
-    ["cover-department"]  = { style = "CoverDepartment", uppercase = false },
-    ["cover-title"]       = { style = "CoverTitle", uppercase = true },
-    ["cover-subtitle"]    = { style = "CoverSubtitle", uppercase = false },
-    ["cover-author"]      = { style = "CoverAuthor", uppercase = false },
-    ["cover-nature"]      = { style = "CoverNature", uppercase = false },
-    ["cover-advisor"]     = { style = "CoverAdvisor", uppercase = false },
+    [classes.COVER_INSTITUTION] = { style = "CoverInstitution", uppercase = true },
+    [classes.COVER_DEPARTMENT]  = { style = "CoverDepartment", uppercase = false },
+    [classes.COVER_TITLE]       = { style = "CoverTitle", uppercase = true },
+    [classes.COVER_SUBTITLE]    = { style = "CoverSubtitle", uppercase = false },
+    [classes.COVER_AUTHOR]      = { style = "CoverAuthor", uppercase = false },
+    [classes.COVER_NATURE]      = { style = "CoverNature", uppercase = false },
+    [classes.COVER_ADVISOR]     = { style = "CoverAdvisor", uppercase = false },
+    [classes.COVER_IMAGE_TITLE]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
+    [classes.COVER_IMAGE_AUTHOR] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
+    [classes.COVER_ICMC_TITLE]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
+    [classes.COVER_ICMC_AUTHOR] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
     -- Position city at ~0.76 inches from bottom (1100 twips)
-    ["cover-location"]    = { style = "CoverLocation", uppercase = false, position_from_bottom = 1100 },
+    [classes.COVER_LOCATION]    = { style = "CoverLocation", uppercase = false, position_from_bottom = 1100 },
     -- Position year at ~0.42 inches from bottom (600 twips)
-    ["cover-year"]        = { style = "CoverYear", uppercase = false, position_from_bottom = 600 },
+    [classes.COVER_YEAR]        = { style = "CoverYear", uppercase = false, position_from_bottom = 600 },
 
     -- Title page elements
-    ["titlepage-author"]      = { style = "TitlePageAuthor", uppercase = false },
-    ["titlepage-title"]       = { style = "TitlePageTitle", uppercase = true },
-    ["titlepage-subtitle"]    = { style = "TitlePageSubtitle", uppercase = false },
-    ["titlepage-nature"]      = { style = "TitlePageNature", uppercase = false },
-    ["titlepage-institution"] = { style = "TitlePageInstitution", uppercase = false },
-    ["titlepage-advisor"]     = { style = "TitlePageAdvisor", uppercase = false },
+    [classes.TITLEPAGE_AUTHOR]      = { style = "TitlePageAuthor", uppercase = false },
+    [classes.TITLEPAGE_TITLE]       = { style = "TitlePageTitle", uppercase = true },
+    [classes.TITLEPAGE_SUBTITLE]    = { style = "TitlePageSubtitle", uppercase = false },
+    [classes.TITLEPAGE_NATURE]      = { style = "TitlePageNature", uppercase = false },
+    [classes.TITLEPAGE_INSTITUTION] = { style = "TitlePageInstitution", uppercase = false },
+    [classes.TITLEPAGE_ADVISOR]     = { style = "TitlePageAdvisor", uppercase = false },
     -- Position city at ~0.76 inches from bottom (1100 twips) - same as cover
-    ["titlepage-location"]    = { style = "TitlePageLocation", uppercase = false, position_from_bottom = 1100 },
+    [classes.TITLEPAGE_LOCATION]    = { style = "TitlePageLocation", uppercase = false, position_from_bottom = 1100 },
     -- Position year at ~0.42 inches from bottom (600 twips) - same as cover
-    ["titlepage-year"]        = { style = "TitlePageYear", uppercase = false, position_from_bottom = 600 },
+    [classes.TITLEPAGE_YEAR]        = { style = "TitlePageYear", uppercase = false, position_from_bottom = 600 },
 
     -- Pre-textual elements
-    ["dedication"]         = { style = "Dedication", uppercase = false },
-    ["epigraph"]           = { style = "Epigraph", uppercase = false },
-    ["unnumbered-heading"] = { style = "UnnumberedHeading", uppercase = false },
-    ["toc-heading"]        = { style = "TOCHeading", uppercase = false },
-    ["appendix-heading"]   = { style = "AppendixHeading", uppercase = false },
-    ["annex-heading"]      = { style = "AnnexHeading", uppercase = false },
+    [classes.DEDICATION]         = { style = "Dedication", uppercase = false },
+    [classes.EPIGRAPH]           = { style = "Epigraph", uppercase = false },
+    [classes.UNNUMBERED_HEADING] = { style = "UnnumberedHeading", uppercase = false },
+    [classes.TOC_HEADING]        = { style = "TOCHeading", uppercase = false },
+    ["approval-page-placeholder"] = { style = "ApprovalPagePlaceholder", uppercase = false, position_from_top = 6500, position_width = 9000 },
+    ["catalog-sheet-placeholder"] = { style = "CatalogSheetPlaceholder", uppercase = false, position_from_top = 1100, position_width = 7000, position_x = 1280 },
 }
 
 -- ============================================================================
@@ -490,68 +544,6 @@ local function ooxml_caption(prefix, seq_name, separator, caption, style, keep_w
     return xml.serialize_element(xml.node("w:p", {}, children))
 end
 
----Generate OOXML for numbered equation using tab-stop layout.
----Uses a single paragraph with center tab (equation) and right tab (number).
----This is the traditional academic approach - no table constraints.
----@param omml string OMML math content
----@param seq_name string SEQ field name
----@param number string|number Equation number
----@param identifier string|nil Bookmark identifier
----@return string OOXML for numbered equation
-local function ooxml_numbered_equation(omml, seq_name, number, identifier)
-    local bookmark_start_xml = ""
-    local bookmark_end_xml = ""
-
-    if identifier and identifier ~= "" then
-        local bm_id = 0
-        for i = 1, #identifier do
-            bm_id = (bm_id * 31 + identifier:byte(i)) % 100000
-        end
-        bm_id = bm_id + 1
-        bookmark_start_xml = xml.serialize_element(xml.node("w:bookmarkStart", {
-            ["w:id"] = tostring(bm_id),
-            ["w:name"] = identifier,
-        }))
-        bookmark_end_xml = xml.serialize_element(xml.node("w:bookmarkEnd", {
-            ["w:id"] = tostring(bm_id),
-        }))
-    end
-
-    -- Tab-stop approach: center tab at ~50% (4680 twips), right tab at 100% (9360 twips)
-    -- Standard US Letter/A4 text width is ~6.5" = 9360 twips
-    -- Equation centered via center tab, number right-aligned via right tab
-    local children = {
-        xml.node("w:pPr", {}, {
-            xml.node("w:tabs", {}, {
-                xml.node("w:tab", {["w:val"] = "center", ["w:pos"] = "4680"}),
-                xml.node("w:tab", {["w:val"] = "right", ["w:pos"] = "9360"}),
-            }),
-        }),
-        -- Tab to center position
-        xml.node("w:r", {}, {xml.node("w:tab")}),
-        -- Pre-formed OMML content
-        xml.raw(omml),
-        -- Tab to right position
-        xml.node("w:r", {}, {xml.node("w:tab")}),
-        -- Bookmark start (pre-formed OOXML, may be empty)
-        xml.raw(bookmark_start_xml),
-        -- Opening parenthesis
-        xml.node("w:r", {}, {xml.node("w:t", {}, {xml.text("(")})}),
-    }
-
-    -- SEQ field code runs
-    append_all(children, build_field_code(
-        " SEQ " .. seq_name .. " \\* ARABIC ",
-        tostring(number or "1")
-    ))
-
-    -- Closing parenthesis and bookmark end
-    table.insert(children, xml.node("w:r", {}, {xml.node("w:t", {}, {xml.text(")")})}))
-    table.insert(children, xml.raw(bookmark_end_xml))
-
-    return xml.serialize_element(xml.node("w:p", {}, children))
-end
-
 ---Get attribute value from Div.
 ---@param div pandoc.Div The div
 ---@param attr_name string Attribute name
@@ -590,17 +582,6 @@ local function convert_specdown_block(block, log)
         return {}  -- Remove - handled in bookmark-start
     end
 
-    -- Handle math-omml:OMML (for DOCX output)
-    local omml = text:match("^math%-omml:(.+)$")
-    if omml then
-        return pandoc.RawBlock("openxml", omml)
-    end
-
-    -- Handle math-mathml:MATHML (skip for DOCX - we prefer OMML)
-    if text:match("^math%-mathml:") then
-        return {}  -- Remove - DOCX uses OMML
-    end
-
     -- Parse simple markers
     local marker_type, value = parse_marker(text)
 
@@ -633,6 +614,11 @@ local function convert_specdown_block(block, log)
     elseif marker_type == "float-position-end" then
         -- End marker for postprocessor
         return pandoc.RawBlock("openxml", '<!-- specdown:float-position-end -->')
+    elseif marker_type == "abnt-cover-background" then
+        return pandoc.RawBlock("openxml", '<!-- specdown:abnt-cover-background -->')
+    elseif marker_type == "abnt-full-page" then
+        return pandoc.RawBlock("openxml",
+            string.format('<!-- specdown:abnt-full-page:%s -->', value or ""))
     else
         if log then log.debug('[FILTER/DOCX/ABNT] Unknown marker: %s', text) end
         return {}  -- Remove unknown markers
@@ -667,10 +653,13 @@ local function convert_styled_div(div, log)
             if mapping.uppercase then
                 text = utf8_upper(text)
             end
-            -- Use positioned version if position_from_bottom is specified
+            -- Use positioned version if an absolute page position is specified.
             if mapping.position_from_bottom then
                 return pandoc.RawBlock("openxml",
                     ooxml_styled_para_positioned(text, mapping.style, mapping.position_from_bottom))
+            elseif mapping.position_from_top then
+                return pandoc.RawBlock("openxml",
+                    ooxml_styled_para_positioned_top(text, mapping.style, mapping.position_from_top, mapping.position_width, mapping.position_x))
             else
                 return pandoc.RawBlock("openxml", ooxml_styled_para(text, mapping.style))
             end
@@ -695,42 +684,97 @@ local function convert_caption_div(div)
     return pandoc.RawBlock("openxml", ooxml_caption(prefix, seq_name, separator, caption, style, true))
 end
 
----Convert speccompiler-numbered-equation Div to OOXML.
+---Convert speccompiler-numbered-equation Div to a single-paragraph OOXML layout.
+---Finds the pandoc.Math element inside the Div, downcasts to InlineMath so
+---Pandoc emits <m:oMath> (not <m:oMathPara>) inline, and wraps with RawInlines
+---that build the custom tabstop + SEQ-field paragraph.
 ---@param div pandoc.Div The equation div
----@return pandoc.RawBlock|nil OOXML numbered equation
+---@return pandoc.Para|table Mixed-content paragraph or {} to remove
 local function convert_equation_div(div)
     local seq_name = get_attr(div, "seq-name") or "Equation"
     local number = get_attr(div, "number") or "1"
     local identifier = get_attr(div, "identifier") or ""
 
-    -- Extract OMML from nested RawBlock
-    -- Note: RawBlock handler runs BEFORE Div handler in Pandoc filters.
-    -- So the math-omml:... block may already be converted to openxml format.
-    local omml = ""
-    for _, block in ipairs(div.content) do
-        if block.t == "RawBlock" then
-            if block.format == "specdown" then
-                -- Original format - extract OMML content after prefix
-                local content = block.text:match("^math%-omml:(.+)$")
-                if content then
-                    omml = content
-                    break
-                end
-            elseif block.format == "openxml" then
-                -- Already converted by RawBlock handler - use directly if it's OMML
-                if block.text:match("^<m:oMath") then
-                    omml = block.text
-                    break
-                end
-            end
+    -- Find the Math element anywhere inside div.content.
+    local math_elt = nil
+    pandoc.walk_block(div, {
+        Math = function(m)
+            math_elt = m
+            return nil
         end
+    })
+    if not math_elt then
+        return {}
     end
 
-    if omml == "" then
-        return {}  -- No math content - remove
+    -- Build bookmark OOXML (matches the old template).
+    local bookmark_start_xml, bookmark_end_xml = "", ""
+    if identifier and identifier ~= "" then
+        local bm_id = 0
+        for i = 1, #identifier do
+            bm_id = (bm_id * 31 + identifier:byte(i)) % 100000
+        end
+        bm_id = bm_id + 1
+        bookmark_start_xml = xml.serialize_element(xml.node("w:bookmarkStart", {
+            ["w:id"] = tostring(bm_id),
+            ["w:name"] = identifier,
+        }))
+        bookmark_end_xml = xml.serialize_element(xml.node("w:bookmarkEnd", {
+            ["w:id"] = tostring(bm_id),
+        }))
     end
 
-    return pandoc.RawBlock("openxml", ooxml_numbered_equation(omml, seq_name, number, identifier))
+    -- SEQ field runs — reuse the existing build_field_code helper.
+    local seq_runs = {}
+    append_all(seq_runs, build_field_code(
+        " SEQ " .. seq_name .. " \\* ARABIC ",
+        tostring(number or "1")
+    ))
+    local seq_xml = ""
+    for _, run in ipairs(seq_runs) do
+        seq_xml = seq_xml .. xml.serialize_element(run)
+    end
+
+    -- Custom pPr + first tab (before the math).
+    -- KNOWN: Pandoc's docx writer emits its own <w:pPr> on the returned Para, so
+    -- the final paragraph contains two <w:pPr> elements (Pandoc's, then ours).
+    -- Word tolerates this and honors our tabstops; the DOCX is schema-invalid
+    -- but renders correctly. The cleaner fix would be constructing the whole
+    -- paragraph as a single RawBlock("openxml", ...), but that sacrifices
+    -- Pandoc's native <m:oMath> emission from the Math element, which is the
+    -- whole point of this refactor.
+    local ppr_xml = xml.serialize_element(
+        xml.node("w:pPr", {}, {
+            xml.node("w:tabs", {}, {
+                xml.node("w:tab", {["w:val"] = "center", ["w:pos"] = "4680"}),
+                xml.node("w:tab", {["w:val"] = "right", ["w:pos"] = "9360"}),
+            }),
+        })
+    )
+    local first_tab_xml = xml.serialize_element(xml.node("w:r", {}, { xml.node("w:tab") }))
+
+    -- Trailing: tab, bookmark-start, "(", SEQ field, ")", bookmark-end.
+    local trailing = table.concat({
+        xml.serialize_element(xml.node("w:r", {}, { xml.node("w:tab") })),
+        bookmark_start_xml,
+        xml.serialize_element(xml.node("w:r", {}, { xml.node("w:t", {}, { xml.text("(") }) })),
+        seq_xml,
+        xml.serialize_element(xml.node("w:r", {}, { xml.node("w:t", {}, { xml.text(")") }) })),
+        bookmark_end_xml,
+    })
+
+    -- Downcast DisplayMath → InlineMath so Pandoc emits <m:oMath> without the
+    -- <m:oMathPara> wrapper. <m:oMathPara> forces Pandoc to open a fresh
+    -- paragraph, which would split our single-paragraph tabstop + SEQ-field
+    -- layout across two paragraphs and break the centered-math + right-number
+    -- visual.
+    local inline_math = pandoc.Math("InlineMath", math_elt.text)
+
+    return pandoc.Para({
+        pandoc.RawInline("openxml", ppr_xml .. first_tab_xml),
+        inline_math,
+        pandoc.RawInline("openxml", trailing),
+    })
 end
 
 ---Convert speccompiler-table Div (unwrap content).
@@ -890,15 +934,6 @@ if FORMAT then
         RawInline = function(inline)
             if inline.format == "specdown" or inline.format == "speccompiler" then
                 local text = inline.text
-                -- Handle inline-math-omml
-                local inline_omml = text:match("^inline%-math%-omml:(.+)$")
-                if inline_omml then
-                    return pandoc.RawInline("openxml", inline_omml)
-                end
-                -- Skip inline-math-mathml for DOCX
-                if text:match("^inline%-math%-mathml:") then
-                    return {}
-                end
                 -- Handle view content
                 local view_name, view_content = text:match("^view:([^:]+):(.+)$")
                 if view_name and view_content then

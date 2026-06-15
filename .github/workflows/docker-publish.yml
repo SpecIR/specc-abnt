@@ -83,9 +83,9 @@ jobs:
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -v "${{ github.workspace }}:/workspace" \
-            -w /workspace/examples \
+            -w /workspace \
             "${IMAGE}" \
-            /opt/speccompiler/bin/speccompiler-core project.yaml
+            build examples/project.yaml
 
           test -f examples/build/monografia.docx
 
@@ -95,61 +95,9 @@ jobs:
 
           docker run --rm \
             -e SPECCOMPILER_HOME=/opt/speccompiler \
+            --entrypoint bash \
             "${IMAGE}" \
             /opt/speccompiler/tests/run.sh abnt-tests
 
-  # ---------------------------------------------------------------------------
-  # Build the example monograph and deploy .docx to the word branch.
-  # ---------------------------------------------------------------------------
-  deploy-word:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build-and-publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Lowercase image name
-        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build example monograph
-        run: |
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -v "${{ github.workspace }}:/workspace" \
-            -w /workspace/examples \
-            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" \
-            /opt/speccompiler/bin/speccompiler-core project.yaml
-
-      - name: Deploy .docx to word branch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Fetch word branch or create it
-          if git fetch origin word; then
-            git worktree add _word origin/word
-          else
-            git worktree add --orphan _word
-            cd _word && git checkout --orphan word && cd ..
-          fi
-
-          # Copy only the .docx output
-          cp examples/build/*.docx _word/
-
-          # Commit and push
-          cd _word
-          git add -A
-          git diff --cached --quiet && echo "No changes to deploy" && exit 0
-          git commit -m "Deploy ABNT monograph from ${GITHUB_SHA::8}"
-          git push origin HEAD:word
+  # The example DOCX is published as a GitHub release by
+  # .github/workflows/publish-document.yml (on every push to main).

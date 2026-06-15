@@ -1,6 +1,6 @@
 # Trabalho Acadêmico
 
-> institution: SpecCompiler Documentation
+> institution: Specdown Documentation
 
 > faculty: Template ABNT
 
@@ -8,17 +8,17 @@
 
 > course: Tutorial Completo
 
-> title: Criando Trabalhos Acadêmicos com SpecCompiler: Guia Prático do Template ABNT
+> title: Criando Trabalhos Acadêmicos com Specdown: Guia Prático do Template ABNT
 
-> author: SpecCompiler Team
+> author: Specdown Team
 
 > advisor: Este documento é auto-demonstrativo
 
-> nature: Documento de exemplo e tutorial que demonstra as funcionalidades do template ABNT do SpecCompiler para criação de trabalhos acadêmicos conforme as normas da ABNT NBR 14724.
+> nature: Documento de exemplo e tutorial que demonstra as funcionalidades do template ABNT do Specdown para criação de trabalhos acadêmicos conforme as normas da ABNT NBR 14724.
 
 > city: Online
 
-> year: 2026
+> year: 2025
 
 ## Capa
 
@@ -30,25 +30,25 @@ Este documento é dedicado a todos que buscam uma forma mais simples de criar tr
 
 ## Agradecimentos
 
-Agradecemos à comunidade de software livre, especialmente aos desenvolvedores do Pandoc e SQLite, que tornaram possível a criação do SpecCompiler.
+Agradecemos à comunidade de software livre, especialmente aos desenvolvedores do Pandoc e SQLite, que tornaram possível a criação do Specdown.
 
 ## Epígrafe
 
 > "Simplicidade é a sofisticação máxima."
 >
-> Leonardo da Vinci
+> — Leonardo da Vinci
 
 ## Resumo
 
-Este documento serve como tutorial e demonstração do template `sigla: Associação Brasileira de Normas Técnicas (ABNT)` do SpecCompiler. Através de uma estrutura auto-referencial, apresenta-se como criar trabalhos acadêmicos em formato Markdown que são automaticamente convertidos para documentos DOCX em conformidade com a NBR 14724 [NBR14724:2011](@cite). São demonstradas as funcionalidades de elementos pré-textuais, textuais e pós-textuais, além de recursos como tabelas, quadros, gráficos baseados em dados, figuras, citações bibliográficas e listas automáticas de siglas, figuras e tabelas.
+Este documento serve como tutorial e demonstração do template `sigla: Associação Brasileira de Normas Técnicas (ABNT)` do Specdown. Através de uma estrutura auto-referencial, apresenta-se como criar trabalhos acadêmicos em formato Markdown que são automaticamente convertidos para documentos DOCX em conformidade com a NBR 14724 [NBR14724:2011](@cite). São demonstradas as funcionalidades de elementos pré-textuais, textuais e pós-textuais, além de recursos como tabelas, quadros, gráficos baseados em dados, figuras, citações bibliográficas e listas automáticas de siglas, figuras e tabelas.
 
-> Palavras-chave: SpecCompiler, ABNT, markdown, trabalhos acadêmicos, NBR 14724.
+> Palavras-chave: specdown, ABNT, markdown, trabalhos acadêmicos, NBR 14724.
 
 ## Abstract
 
-This document serves as a tutorial and demonstration of the SpecCompiler ABNT template. Through a self-referential structure, it presents how to create academic works in Markdown format that are automatically converted to DOCX documents in compliance with NBR 14724. The functionalities of pre-textual, textual and post-textual elements are demonstrated, as well as features such as tables, frames, data-driven charts, figures, bibliographic citations and automatic lists of abbreviations, figures and tables.
+This document serves as a tutorial and demonstration of the Specdown ABNT template. Through a self-referential structure, it presents how to create academic works in Markdown format that are automatically converted to DOCX documents in compliance with NBR 14724. The functionalities of pre-textual, textual and post-textual elements are demonstrated, as well as features such as tables, frames, data-driven charts, figures, bibliographic citations and automatic lists of abbreviations, figures and tables.
 
-> Keywords: SpecCompiler, ABNT, markdown, academic works, NBR 14724.
+> Keywords: specdown, ABNT, markdown, academic works, NBR 14724.
 
 ## Lista de Figuras
 
@@ -60,21 +60,29 @@ This document serves as a tutorial and demonstration of the SpecCompiler ABNT te
 
 ## Introdução
 
-Ferramentas como Limarka [limarka](@cite), Quarto [quarto](@cite) e RMarkdown permiter escrever em Markdown e obter documentos academicamente formatados através do LaTeX.
+O Markdown conquistou a escrita acadêmica por sua simplicidade: uma sintaxe minimalista que permite ao autor concentrar-se no conteúdo, não na formatação. Ferramentas como Limarka [limarka](@cite), Quarto [quarto](@cite) e RMarkdown prometem o melhor dos dois mundos—escrever em Markdown, obter documentos academicamente formatados. Porém, há um paradoxo fundamental: quase todas essas ferramentas dependem do `sigla: LaTeX (LTX)` como backend para geração de PDF. O autor escreve em Markdown, mas o "último quilômetro" é sempre LaTeX.
 
-A necessidade de instalar uma distribuição TeX completa (aproximadamente 4GB) e eventualmente depurar erros crípticos de compilação LaTeX contradiz a simplicidade prometida pelo Markdown. Há ainda o problema do formato de saída. PDFs são destinos finais, não documentos de trabalho.
+Essa dependência cria uma **abstração vazada**. Quando o documento requer formatação específica—margens ABNT, capas institucionais, fichas catalográficas—o autor é frequentemente forçado a injetar código LaTeX diretamente no Markdown, quebrando a promessa de separação entre conteúdo e apresentação. A necessidade de instalar uma distribuição TeX completa (aproximadamente 4GB) e eventualmente depurar erros crípticos de compilação LaTeX contradiz a simplicidade prometida pelo Markdown.
 
-O `sigla: SpecCompiler (specc)` propõe uma abordagem diferente: eliminar completamente o LaTeX da cadeia. O pipeline Markdown → SQLite → Pandoc → `sigla: Office Open XML (OOXML)` gera documentos DOCX nativos, editáveis, e em conformidade com as normas ABNT sem dependências pesadas ou conhecimento de LaTeX. Similar em objetivo ao abnTeX [abntex2classe](@cite), mas fundamentalmente diferente em implementação.
+Há ainda o **problema do formato de saída**. LaTeX é amplamente utilizado na engenharia acadêmica—e praticamente só lá. Periódicos científicos aceitam submissões em Word. Escritórios de transferência tecnológica trabalham com Word. Equipes de P&D em indústria colaboram em Word. O documento que realmente circula, que é revisado por orientadores, avaliado por bancas e arquivado em repositórios institucionais, é quase sempre um arquivo `.docx`. LaTeX produz PDFs elegantes, mas PDFs são destinos finais—não documentos de trabalho.
 
-Este documento demonstra, de forma prática, como utilizar o SpecCompiler para criar uma monografia. Cada seção é um exemplo das funcionalidades disponíveis, conforme ilustra a [fig:capybara](#).
+O `sigla: Specdown (SDN)` propõe uma abordagem diferente: **eliminar completamente o LaTeX da cadeia de produção**. O pipeline Markdown → SQLite → Pandoc → `sigla: Office Open XML (OOXML)` gera documentos DOCX nativos, editáveis, e em conformidade com as normas ABNT—sem dependências pesadas ou conhecimento de LaTeX. Similar em objetivo ao `sigla: abnTeX (ABN)` [abntex2classe](@cite), mas fundamentalmente diferente em implementação.
+
+O Specdown foi projetado originalmente para **engenharia de requisitos**—rastrear requisitos, casos de verificação e decisões de design em projetos de software crítico. Porém, ao tratar normas de publicação científica (como ABNT NBR 14724) como **especificações formais**, o sistema se adapta naturalmente à escrita acadêmica. O mesmo motor que valida rastreabilidade de requisitos valida a estrutura de uma monografia.
+
+Essa convergência reflete uma verdade mais profunda: **documentação e relatórios são faces da mesma moeda**. Uma especificação de requisitos de software e uma dissertação de mestrado compartilham a necessidade de estrutura verificável, referências cruzadas consistentes, e conformidade com normas.
+
+Este documento demonstra, de forma prática, como utilizar o Specdown para criar uma monografia. Cada seção é um exemplo vivo das funcionalidades disponíveis, conforme ilustra a [fig:capybara](#).
 
 ```fig:capybara{caption="Capivara descansando - exemplo de figura com legenda" source="Autor"}
 capybara.jpg
 ```
 
-### Por que SpecCompiler?
+### Por que Specdown?
 
-O [listing:sintaxe-comparacao](#) ilustra a diferença de sintaxe entre LaTeX e Markdown:
+O ecossistema de ferramentas Markdown para trabalhos acadêmicos—Limarka [limarka](@cite), Quarto [quarto](@cite), RMarkdown—compartilha uma característica comum: todas utilizam LaTeX como backend para geração de PDF. Isso significa que, apesar da simplicidade do Markdown na superfície, o autor ainda precisa de uma distribuição TeX completa instalada, e eventualmente precisará depurar erros de LaTeX quando a abstração "vazar".
+
+O Specdown adota uma abordagem diferente: **não há LaTeX no pipeline**. O [listing:sintaxe-comparacao](#) ilustra a diferença de sintaxe entre LaTeX e Markdown:
 
 ```listing:sintaxe-comparacao{caption="Comparação de sintaxe: LaTeX vs Markdown" source="Elaboração própria"}
 LATEX                                   MARKDOWN
@@ -95,20 +103,42 @@ LATEX                                   MARKDOWN
 \cite{autor2024}                       [autor2024](@cite)
 ```
 
-As principais vantagens do SpecCompiler incluem:
+As principais vantagens do Specdown incluem:
 
-1. **Sintaxe mais simples**: Não existem tags verbosas que dificultam a leitura da fonte.
-2. **Saída editável e colaborativa**: Diferentemente do PDF (formato de visualização), o DOCX permite controle de alterações, comentários em linha, e revisão usando ferramentas familiares (Word, LibreOffice, Google Docs)
-3. **Banco de dados**: Estrutura do documento em SQLite permite validação: uma monografia precisa de uma conclusão.
+1. **Sem dependência LaTeX**: O pipeline utiliza exclusivamente Pandoc e OOXML—nenhuma distribuição TeX necessária
+2. **Saída editável e colaborativa**: Diferentemente do PDF (formato de visualização), o DOCX permite controle de alterações, comentários em linha, e revisão por orientadores usando ferramentas familiares (Word, LibreOffice, Google Docs)
+3. **Conformidade automática**: Pós-processamento OOXML aplica formatação ABNT (bordas de tabela IBGE, margens, numeração) conforme NBR 14724 [NBR14724:2011](@cite)
+4. **Campos nativos**: Sumário, lista de figuras e tabelas usam campos do Word (atualização automática ao abrir o documento)
+5. **Banco de dados**: Estrutura do documento em SQLite permite validação semântica e consultas para gráficos
+6. **Citações bibliográficas**: Integração com Citeproc para referências no padrão ABNT [NBR6023:2018](@cite)
+
+### Tipagem Forte vs Tipagem Fraca
+
+No LaTeX, `\section{Introdução}` é um comando de formatação—nada impede `\section{Conclusão}` aparecer antes de `\section{Introdução}`. No Markdown puro, `## Introdução` é ainda mais genérico: um cabeçalho sem semântica alguma.
+
+No Specdown, quando você escreve `## Introdução`, o sistema:
+
+1. Reconhece o texto "Introdução" como **alias implícito** do tipo `INTRODUCTION`
+2. Verifica que `INTRODUCTION` é **permitido** em especificações `MONOGRAFIA`
+3. Valida que aparece **após** elementos pré-textuais
+4. Garante que há **exatamente uma** introdução (`max_count: 1`)
+
+Os tipos não são declarados em JSON—cada tipo ABNT é um módulo TypeScript em `types/objects/`, compilado para SQL no build. Por exemplo, o tipo `ABSTRACT` em `types/objects/abstract/schema.ts` define:
+
+- `implicit_aliases`: ["Resumo", "Abstract", "Résumé"]
+- `extends`: "PRE_TEXTUAL"
+- `attributes`: [{ name: "keywords", type: "string" }]
+
+Especificações bem tipadas não falham em tempo de compilação.
 
 ### Extensões ao Markdown
 
-O Markdown original é deliberadamente minimalista e essa simplicidade tem um custo. A especificação original não contempla tabelas, fórmulas matemáticas, referências cruzadas numeradas, nem figuras com legendas e fontes. Para escrita acadêmica, essas lacunas são críticas.
+O Markdown original é deliberadamente minimalista—e essa simplicidade tem um custo. A especificação original não contempla tabelas, fórmulas matemáticas, referências cruzadas numeradas, nem figuras com legendas e fontes. Para escrita acadêmica, essas lacunas são críticas.
 
-O SpecCompiler estende o Markdown com sintaxe adicional para suprir essas necessidades:
+O Specdown estende o Markdown com sintaxe adicional para suprir essas necessidades:
 
 - **Tabelas**: Sintaxes `list-table:` e `csv:` para tabelas complexas com cabeçalhos e alinhamento
-- **Matemática**: Notação AsciiMath (mais simples que TeX) para equações.
+- **Matemática**: Notação AsciiMath (mais legível que LaTeX) para equações inline e em bloco
 - **Figuras numeradas**: Blocos `fig:` com legendas, fontes e numeração automática
 - **Referências cruzadas**: Links `[type:identificador](#)` que se resolvem para "Figura 1", "Tabela 2", etc.
 - **Quadros e listagens**: Blocos `listing:` e `src.<ext>:` para código com moldura ABNT
@@ -123,6 +153,10 @@ As seções seguintes demonstram cada uma dessas extensões em uso prático.
 ### Estrutura deste Documento
 
 Este tutorial segue a estrutura padrão de uma monografia conforme NBR 14724 [NBR14724:2011](@cite):
+
+- **Elementos pré-textuais**: Capa, folha de rosto, resumo, listas, sumário
+- **Elementos textuais**: Introdução, desenvolvimento, conclusão
+- **Elementos pós-textuais**: Referências, apêndices, anexos
 
 ## Figuras e Ilustrações
 
@@ -147,7 +181,7 @@ Gráficos são renderizados usando ECharts[^echarts], uma biblioteca de visualiz
 - **`query`**: consulta uma view SQL do banco de dados do documento
 - **`generator`**: invoca uma função Lua que gera os dados programaticamente
 
-A [chart:abnt-types](#) demonstra o uso de `query`, os dados vêm diretamente do próprio documento, mostrando a distribuição dos tipos ABNT utilizados nesta monografia:
+A [chart:abnt-types](#) demonstra o uso de `query` — os dados vêm diretamente do próprio documento, mostrando a distribuição dos tipos ABNT utilizados nesta monografia:
 
 ```chart:abnt-types{query="abnt_types_summary" caption="Tipos ABNT utilizados neste documento"}
 {
@@ -163,7 +197,7 @@ A [chart:abnt-types](#) demonstra o uso de `query`, os dados vêm diretamente do
 }
 ```
 
-Para o template ABNT, geradores Lua são particularmente úteis para visualizar funções matemáticas como a [chart:curva-gauss](#), que renderiza a distribuição normal a partir de parâmetros:
+Para o template ABNT, geradores Lua são particularmente úteis para visualizar funções matemáticas — como a [chart:curva-gauss](#), que renderiza a distribuição normal a partir de parâmetros:
 
 ```chart:curva-gauss{generator="gaussian" mean="0" sigma="1" xmin="-3" xmax="3" points="61" caption="Distribuição Normal — gerada via Lua"}
 {
@@ -192,8 +226,8 @@ A [puml:fluxo-documento](#) ilustra o fluxo básico de criação de um documento
 skinparam backgroundColor #FEFEFE
 
 start
-:Escrever conteudo\nem Markdown;
-:Definir metadados\n(titulo, autor, etc.);
+:Escrever conteúdo\nem Markdown;
+:Definir metadados\n(título, autor, etc.);
 :Executar build;
 
 fork
@@ -201,7 +235,7 @@ fork
 fork again
   :Processar tabelas;
 fork again
-  :Processar citacoes;
+  :Processar citações;
 end fork
 
 :Gerar DOCX\nformatado;
@@ -250,7 +284,7 @@ Exemplo com citação bibliográfica:
 
 ## Tabelas e Quadros
 
-A ABNT distingue entre **tabelas** e **quadros** — uma distinção importante que o SpecCompiler respeita.
+A ABNT distingue entre **tabelas** e **quadros** — uma distinção importante que o Specdown respeita.
 
 ### A Diferença
 
@@ -345,7 +379,7 @@ Sul,200,230,260
 
 ### Quadros e Listagens de Código
 
-O SpecCompiler oferece duas sintaxes para criar quadros (código/listagens):
+O Specdown oferece duas sintaxes para criar quadros (código/listagens):
 
 1. **`listing:label`** — Quadro genérico, sem realce de sintaxe. Ideal para texto estruturado, pseudocódigo ou informações textuais.
 
@@ -355,9 +389,9 @@ Ambas as sintaxes suportam os atributos `caption` e `source`, e são renderizada
 
 #### Quadro Textual (sem realce)
 
-O [listing:vantagens-SpecCompiler](#) demonstra a sintaxe `listing:` para informações textuais:
+O [listing:vantagens-specdown](#) demonstra a sintaxe `listing:` para informações textuais:
 
-```listing:vantagens-SpecCompiler{caption="Principais vantagens do SpecCompiler" source="Elaboração própria"}
+```listing:vantagens-specdown{caption="Principais vantagens do Specdown" source="Elaboração própria"}
 1. SINTAXE SIMPLES
    Markdown é intuitivo e legível mesmo em formato texto puro.
    Não requer conhecimento de LaTeX ou linguagens complexas.
@@ -392,6 +426,19 @@ Outras linguagens suportadas incluem: `src.lua:`, `src.python:`, `src.java:`, `s
 
 ### Equações e Fórmulas com AsciiMath
 
+O Specdown utiliza AsciiMath para expressões matemáticas — uma sintaxe mais simples e legível que LaTeX. A [csv:asciimath-vs-latex](#) compara as duas notações:
+
+```csv:asciimath-vs-latex{caption="Comparação entre AsciiMath e LaTeX" source="Elaboração própria"}
+Expressão,AsciiMath,LaTeX
+Fração,x/y,\\frac{x}{y}
+Raiz quadrada,sqrt(x),\\sqrt{x}
+Potência,x^2,x^{2}
+Subscrito,x_i,x_{i}
+Somatório,sum_(i=1)^n i,\\sum_{i=1}^{n} i
+Integral,int_0^1 f(x) dx,\\int_{0}^{1} f(x) dx
+Fórmula quadrática,(-b +- sqrt(b^2-4ac))/(2a),\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}
+```
+
 #### Sintaxe Inline
 
 Para inserir matemática no meio do texto, use a sintaxe `` `math: expressão` ``. Exemplos:
@@ -416,11 +463,30 @@ A fórmula quadrática de Bhaskara ([math:bhaskara](#)) fornece as raízes de eq
 x = (-b +- sqrt(b^2 - 4ac)) / (2a)
 ```
 
-As equações demonstram a capacidade do SpecCompiler de renderizar fórmulas matemáticas complexas usando notação AsciiMath.
+A integral de Gauss ([math:gauss](#)) é fundamental na teoria das probabilidades e estatística:
+
+```math:gauss{caption="Integral de Gauss"}
+int_(-oo)^(oo) e^(-x^2) dx = sqrt(pi)
+```
+A entropia de Shannon ([math:shannon](#)) quantifica a informação média em uma fonte de dados:
+
+```math:shannon{caption="Entropia de Shannon"}
+H(X) = -sum_(i=1)^n p(x_i) log_2 p(x_i)
+```
+
+As equações demonstram a capacidade do Specdown de renderizar fórmulas matemáticas complexas usando notação AsciiMath, que é mais intuitiva que LaTeX para a maioria dos casos.
+
+#### Referência Rápida AsciiMath
+
+- Operações básicas: `+`, `-`, `*`, `/`, `=`, `!=`, `<`, `>`, `<=`, `>=`
+- Símbolos gregos: `alpha`, `beta`, `gamma`, `delta`, `pi`, `theta`, `omega`
+- Funções: `sin`, `cos`, `tan`, `log`, `ln`, `exp`, `sqrt`
+- Agrupamento: parênteses `()`, colchetes `[]`, chaves `{}`
+- Matrizes: `[[a,b],[c,d]]` para matriz 2x2
 
 ## Citações e Referências Bibliográficas
 
-O SpecCompiler utiliza Citeproc para processar citações, um único arquivo `.bib` e um estilo CSL são suficientes. O processamento segue as normas NBR 10520 [NBR10520:2002](@cite) e NBR 6023 [NBR6023:2018](@cite).
+O Specdown utiliza Citeproc para processar citações—não o tradicional toolchain BibTeX/Biber do LaTeX. Essa escolha simplifica significativamente o fluxo de trabalho: um único arquivo `.bib` e um estilo CSL são suficientes, sem necessidade de múltiplas compilações ou arquivos auxiliares (`.aux`, `.bbl`, `.blg`, `.bcf`, `.run.xml`). O processamento segue as normas NBR 10520 [NBR10520:2002](@cite) e NBR 6023 [NBR6023:2018](@cite).
 
 ### Tipos de Citação
 
@@ -446,17 +512,23 @@ O processamento de citações utiliza dois componentes:
 
 2. **CSL (Citation Style Language)**: Arquivo XML que define o estilo de formatação das citações
 
-O template ABNT inclui o arquivo `citations.csl` com o estilo ABNT (autor-data). A configuração é feita no `project.yaml`:
+O template ABNT já fornece o estilo de citação (`abnt.csl`, declarado em `models/abnt/config.lua`); o `project.yaml` precisa apenas indicar a bibliografia:
 
     # Configuração de bibliografia (citeproc)
     bibliography: references.bib
-    csl: ../dist/citations.csl
+    # csl: opcional — só declare aqui para sobrescrever o estilo do modelo
+
+O arquivo CSL determina:
+- Formato da citação no texto: (Autor, ano) vs [Autor, ano]
+- Formato das entradas na bibliografia
+- Ordenação das referências
+- Regras de abreviação (et al.)
 
 O estilo ABNT segue a NBR 10520 [NBR10520:2002](@cite) para citações e NBR 6023 [NBR6023:2018](@cite) para referências.
 
 ## Referências Cruzadas
 
-O SpecCompiler suporta referências cruzadas para figuras, tabelas, quadros e seções:
+O Specdown suporta referências cruzadas para figuras, tabelas, quadros e seções:
 
 - Figuras: conforme demonstrado na [fig:capybara](#)
 - Tabelas: os dados da [csv:dados-regionais](#) mostram...
@@ -498,7 +570,7 @@ O sistema infere o **tipo de relação** (`XREF_FIGURE`, `XREF_TABLE`, `XREF_LIS
 
 ## Siglas e Abreviaturas
 
-O SpecCompiler gerencia siglas automaticamente. Na primeira ocorrência, o termo completo é exibido com a sigla entre parênteses. Nas ocorrências seguintes, apenas a sigla aparece.
+O Specdown gerencia siglas automaticamente. Na primeira ocorrência, o termo completo é exibido com a sigla entre parênteses. Nas ocorrências seguintes, apenas a sigla aparece.
 
 Para definir uma sigla, use:
 
@@ -508,17 +580,17 @@ Ao longo deste documento, várias siglas foram utilizadas: ABNT, SDN, ECH, UML, 
 
 ## Peculiaridades das Normas ABNT
 
-As normas ABNT para trabalhos acadêmicos incluem requisitos complexos que o SpecCompiler implementa.
+As normas ABNT para trabalhos acadêmicos incluem requisitos complexos que o Specdown implementa automaticamente.
 
 ### Numeração de Páginas
 
 A NBR 14724 [NBR14724:2011](@cite) estabelece que os elementos pré-textuais são **contados, mas não numerados**. A numeração visível começa apenas na parte textual, em algarismos arábicos.
 
-Curiosamente, o uso de algarismos romanos no súmario para elementos pré-textuais não é exigido pela norma, mas uma adição que tornou-se quase padrão.
+Curiosamente, o uso de algarismos romanos nos pré-textuais (i, ii, iii...) **não é exigido pela norma** — é uma adição de algumas instituições [abntex2wiki:romanos](@cite). O Specdown suporta ambas as configurações.
 
 ### Capítulos em Páginas Ímpares
 
-Para impressão frente e verso, a norma exige que capítulos iniciem em páginas ímpares (lado direito do documento aberto). O SpecCompiler insere automaticamente páginas em branco quando necessário.
+Para impressão frente e verso, a norma exige que capítulos iniciem em páginas ímpares (lado direito do documento aberto). O Specdown insere automaticamente páginas em branco quando necessário.
 
 ### Margens Espelhadas
 
@@ -536,52 +608,70 @@ Tabelas seguem o padrão do IBGE [ibge1993](@cite):
 
 ### Template Extensível
 
-O template ABNT é apenas um exemplo das capacidades do SpecCompiler. O sistema de extensões permite criar templates para qualquer padrão documental — `sigla: Institute of Electrical and Electronics Engineers (IEEE)`, `sigla: American Psychological Association (APA)`, normas corporativas, etc.
+O template ABNT é apenas um exemplo das capacidades do Specdown. O sistema de extensões permite criar templates para qualquer padrão documental — `sigla: Institute of Electrical and Electronics Engineers (IEEE)`, `sigla: American Psychological Association (APA)`, normas corporativas, etc.
 
-O template ABNT estende o template `default`, herdando funcionalidades como gráficos, PlantUML e tabelas (list-table, CSV, TSV) e adicionando tipos específicos para a estrutura acadêmica brasileira.
+O template ABNT estende o template `default`, herdando funcionalidades como gráficos, PlantUML e tabelas (list-table, CSV, TSV), e adicionando tipos específicos para a estrutura acadêmica brasileira.
 
 ## Conclusão
 
-Este documento demonstrou como utilizar o template ABNT do SpecCompiler para criar trabalhos acadêmicos em conformidade com a NBR 14724 [NBR14724:2011](@cite). Através de exemplos práticos, foram apresentados:
+Este documento demonstrou como utilizar o template ABNT do Specdown para criar trabalhos acadêmicos em conformidade com a NBR 14724 [NBR14724:2011](@cite). Através de exemplos práticos, foram apresentados:
 
 1. Inserção de figuras com legendas padronizadas ([fig:capybara](#))
 2. Gráficos com dados do banco ([chart:abnt-types](#))
 3. Diagramas PlantUML ([puml:fluxo-documento](#))
 4. Tabelas com sintaxe list-table ([list-table:elementos-pretextuais](#))
 5. Tabelas com sintaxe CSV ([csv:dados-regionais](#))
-6. Quadros para informações textuais ([listing:vantagens-SpecCompiler](#))
+6. Quadros para informações textuais ([listing:vantagens-specdown](#))
 7. Citações bibliográficas conforme ABNT
 8. Referências cruzadas automáticas
 9. Gerenciamento de siglas
 
-### Documentação e Relatórios
+### Uma Mudança de Paradigma
 
-Ferramentas tradicionais separam **documentação** (conteúdo estático, escrito manualmente) de **relatórios** (conteúdo dinâmico, gerado de dados). O SpecCompiler dissolve essa fronteira.
+Mais do que uma ferramenta de formatação, o Specdown representa uma mudança de paradigma na produção de documentos acadêmicos brasileiros. Ao eliminar o LaTeX do pipeline de geração, rompe-se com décadas de dependência de um ecossistema notoriamente complexo.
+
+A própria nomenclatura do ecossistema TeX revela sua fragmentação: TeX é o sistema de tipografia original de Donald Knuth (1978); LaTeX é uma camada de macros sobre o TeX criada por Leslie Lamport; pdfTeX, XeTeX e LuaTeX são diferentes *engines* que processam o código-fonte; e distribuições como TeX Live e MiKTeX empacotam milhares de pacotes com dependências cruzadas. Para o usuário iniciante, a distinção entre esses componentes raramente é clara—e quando algo falha, a depuração exige conhecimento de múltiplas camadas.
+
+Plataformas como Overleaf [overleaf](@cite) mitigaram parte dessa complexidade ao oferecer um ambiente web pré-configurado, democratizando o acesso ao LaTeX. Porém, ao custo de *lock-in*: o documento existe apenas na nuvem do fornecedor, e a colaboração depende de todos os participantes terem conta na plataforma.
+
+O formato DOCX de saída do Specdown não é uma limitação, mas uma característica estratégica. Diferentemente do PDF—um formato de visualização, não de edição—o DOCX permite colaboração nativa: controle de alterações, comentários em linha, e revisão por orientadores e bancas usando ferramentas já instaladas em seus computadores (Microsoft Word, LibreOffice, Google Docs). Não há necessidade de instalar software especializado ou criar contas em plataformas proprietárias.
+
+O Specdown automatiza a formatação e validação do documento, permitindo que o autor concentre-se no conteúdo.
+
+### Documentação e Relatórios: A Linha que Desaparece
+
+Ferramentas tradicionais separam **documentação** (conteúdo estático, escrito manualmente) de **relatórios** (conteúdo dinâmico, gerado de dados). O Specdown dissolve essa fronteira.
 
 Neste documento, elementos como:
 
-- `toc:` — sumário gerado automaticamente da estrutura
-- `lof:` — lista de figuras extraída do banco de dados
-- `sigla_list:` — lista de siglas populada durante a compilação
+- a seção `## Sumário` — sumário gerado automaticamente da estrutura
+- a seção `## Lista de Figuras` — lista de figuras extraída do banco de dados
+- a seção `## Lista de Siglas` — lista de siglas populada durante a compilação
 - `chart:abnt-types{query="..."}` — gráfico que consulta views SQL
 
-...não são conteúdo estático. São **consultas materializadas** que se atualizam a cada build. O documento é simultaneamente **documentação** (texto autoral) e **relatório** (dados do sistema).
+...não são conteúdo estático. São **consultas materializadas** que se atualizam a cada build. O documento é simultaneamente **documentação** (texto autoral) e **relatório** (dados do sistema de tipos).
 
-Essa fusão é possível porque o SpecCompiler armazena tudo em SQLite: objetos, relações, atributos, hierarquias. Views SQL podem agregar, filtrar e projetar esses dados—e gráficos ECharts podem visualizá-los.
+Essa fusão é possível porque o Specdown armazena tudo em SQLite: objetos, relações, atributos, hierarquias. Views SQL podem agregar, filtrar e projetar esses dados—e gráficos ECharts podem visualizá-los. O template apenas define **quais views existem** e **como renderizá-las**.
 
-O mesmo mecanismo que gera "Lista de Figuras" numa monografia pode gerar "Matriz de Rastreabilidade" num SRS ou "Relatório de Cobertura" num TRR.
+O mesmo mecanismo que gera "Lista de Figuras" numa monografia pode gerar "Matriz de Rastreabilidade" num SRS ou "Relatório de Cobertura" num TRR. A diferença é o template e as views—não o motor.
 
 ## Trabalhos Futuros
 
-O desenvolvimento do specc-abnt segue duas direções prioritárias:
+O desenvolvimento do Specdown segue duas direções prioritárias:
 
 ### Editor Colaborativo em Tempo Real
 
-Integração com um editor web que permita múltiplos autores editarem o mesmo documento simultaneamente, similar à experiência do Google Docs ou Overleaf.
+Integração com um editor web que permita múltiplos autores editarem o mesmo documento simultaneamente, similar à experiência do Google Docs ou Overleaf—mas com o documento-fonte em Markdown e armazenamento local ou em repositórios Git, evitando dependência de plataformas proprietárias.
 
 ### Interoperabilidade DOCX (Round-Trip)
 
-Atualmente, o fluxo é unidirecional: Markdown → DOCX. Um objetivo futuro é suportar importação de arquivos DOCX existentes, convertendo-os para a estrutura Markdown do SpecCompiler para permitir Ciclos iterativos de edição (*round-trip*) sem perda.
+Atualmente, o fluxo é unidirecional: Markdown → DOCX. Um objetivo futuro é suportar importação de arquivos DOCX existentes, convertendo-os para a estrutura Markdown do Specdown. Isso permitiria:
+
+- Migrar trabalhos iniciados em Word para o ecossistema Specdown
+- Incorporar revisões feitas diretamente no DOCX de volta ao fonte Markdown
+- Ciclos iterativos de edição (*round-trip*) sem perda de formatação semântica
+
+Essa interoperabilidade bidirecional eliminaria a principal barreira de adoção: a necessidade de começar do zero em uma nova ferramenta.
 
 ## Referências
 
@@ -592,9 +682,7 @@ Atualmente, o fluxo é unidirecional: Markdown → DOCX. Um objetivo futuro é s
 ### Atributos do Documento
 
     > institution: Nome da Instituição
-
     > author: Nome do Autor
-
     > title: Título do Trabalho
 
 ### Figuras
@@ -697,10 +785,17 @@ Aplicáveis a `fig:`, `puml:`, `chart:`:
       preset: academico
       reference_doc: ../dist/reference.docx
 
-    # Bibliografia (citeproc)
+    # Bibliografia (citeproc); o estilo CSL é fornecido pelo modelo ABNT.
     bibliography: references.bib
-    csl: ../dist/citations.csl
 
 ## ANNEX: Normas ABNT Consultadas
 
-Normas da ABNT consultadas para desenvolvimento do template [NBR14724:2011;NBR14724:2024;NBR6023:2018;NBR6028:2003;NBR6027:2012;NBR6024:2012;NBR10520:2002](@cite).
+Lista das normas da ABNT consultadas para desenvolvimento do template [NBR14724:2011;NBR14724:2024;NBR6023:2018;NBR6028:2003;NBR6027:2012;NBR6024:2012;NBR10520:2002](@cite):
+
+- **NBR 14724:2011** — Trabalhos acadêmicos — Apresentação
+- **NBR 14724:2024** — Trabalhos acadêmicos — Apresentação (atualização)
+- **NBR 6023:2018** — Referências — Elaboração
+- **NBR 6028:2003** — Resumo — Apresentação
+- **NBR 6027:2012** — Sumário — Apresentação
+- **NBR 6024:2012** — Numeração progressiva das seções
+- **NBR 10520:2002** — Citações em documentos
