@@ -9,8 +9,8 @@ return {
         },
     },
     citation = {
-        -- Resolved against models/abnt/assets/. Projects can override via
-        -- `csl:` in project.yaml.
+        -- Resolved against models/abnt/assets/. Model-declared: citation
+        -- style is part of the model, not project-configurable.
         csl = "abnt.csl",
     },
 }

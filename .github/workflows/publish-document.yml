@@ -1,0 +1,62 @@
+# Build the ABNT document and publish the DOCX as a GitHub release on every
+# push to main.
+#
+# This repository doubles as a TEMPLATE for writing ABNT documents:
+#   1. Fork it (or "Use this template").
+#   2. Write your document in a directory containing a project.yaml
+#      (the default is examples/ — see PROJECT_DIR below).
+#   3. Push to main. This workflow builds the DOCX with the ready-made
+#      ghcr.io/specir/specc-abnt image (no Docker build needed in your fork)
+#      and attaches it to a release.
+#
+# To extend: change PROJECT_DIR to your document directory, or add more
+# directories to the build step — every *.docx found under <dir>/build/ is
+# attached to the release.
+name: Publish Document
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  # Ready-made SpecCompiler + ABNT image. Forks keep this default; point it
+  # at your own image only if you extend the model itself.
+  SPECC_IMAGE: ghcr.io/specir/specc-abnt:latest
+  # Directory containing your project.yaml.
+  PROJECT_DIR: examples
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build document
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            "${SPECC_IMAGE}" \
+            build "${PROJECT_DIR}/project.yaml"
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p release-artifacts
+          # reference.docx is the intermediate pandoc style reference — skip it
+          find "${PROJECT_DIR}/build" -maxdepth 1 -name '*.docx' ! -name 'reference.docx' -exec cp {} release-artifacts/ \;
+          ls -l release-artifacts
+          test -n "$(ls release-artifacts)"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Document build ${{ github.run_number }}
+          files: release-artifacts/*
+          body: |
+            DOCX built from ${{ github.sha }} by SpecCompiler (ABNT model).

@@ -25,7 +25,17 @@ template: abnt
 style: academico
 ```
 
-See the [examples/](examples/) directory for a complete [monograph example](https://github.com/SpecIR/specc-abnt/raw/refs/heads/word/monografia.docx).
+See the [examples/](examples/) directory for a complete monograph example — the built DOCX is attached to every [release](https://github.com/SpecIR/specc-abnt/releases) (published automatically on each push to main).
+
+## Use as a template
+
+This repository doubles as a template for writing your own ABNT document with automatic DOCX publishing:
+
+1. Fork it (or "Use this template" on GitHub).
+2. Write your document in a directory containing a `project.yaml` (the example in `examples/` is the default).
+3. Push to `main` — the [Publish Document workflow](.github/workflows/publish-document.yml) builds the DOCX with the ready-made `ghcr.io/specir/specc-abnt` image (no Docker build in your fork) and attaches it to a GitHub release.
+
+To point the workflow at your own document, edit `PROJECT_DIR` at the top of `.github/workflows/publish-document.yml`.
 
 ## Output formats
 

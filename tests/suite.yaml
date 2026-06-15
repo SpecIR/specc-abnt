@@ -9,4 +9,9 @@ template: abnt
 style: academico
 output_format: json
 
+# Test model overlays: prepended to package.path so test-only modules
+# (data-view fixtures under models/default/types/views/test_fixtures/)
+# resolve before production models.
+extra_lua_paths: models/abnt/tests
+
 bibliography: references.bib
