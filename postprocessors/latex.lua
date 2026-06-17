@@ -1,4 +1,4 @@
----ABNT LaTeX Post-processor for SpecDown.
+---ABNT LaTeX Post-processor for SpecCompiler.
 ---Transforms Pandoc's default LaTeX output to abntex2-compliant document.
 ---
 ---This includes:
@@ -9,7 +9,7 @@
 ---  - Table formatting for IBGE three-line style
 ---
 ---@module abnt.postprocessors.latex
----@author SpecDown Team
+---@author SpecCompiler Team
 ---@license MIT
 
 local M = {}

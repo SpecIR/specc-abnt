@@ -1,4 +1,4 @@
----ABNT OOXML Post-processor for SpecDown v2.
+---ABNT OOXML Post-processor for SpecCompiler v2.
 ---Modifies DOCX files after Pandoc generation to apply ABNT-specific formatting.
 ---
 ---This includes:
@@ -8,7 +8,7 @@
 ---  - Heading numbering
 ---
 ---@module abnt.ooxml.postprocess
----@author SpecDown Team
+---@author SpecCompiler Team
 ---@license MIT
 
 local xml = require("infra.format.xml")
