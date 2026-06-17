@@ -3,7 +3,9 @@
 ### Atributos do Documento
 
     > institution: Nome da Instituição
+    
     > author: Nome do Autor
+    
     > title: Título do Trabalho
 
 ### Figuras
@@ -79,13 +81,6 @@ Aplicáveis a `fig:`, `puml:`, `chart:`:
 ### Siglas
 
     `sigla: Termo Completo (SIGLA)`
-
-### Listas Automáticas
-
-    `toc:`        — Sumário
-    `lof:`        — Lista de figuras
-    `lot:`        — Lista de tabelas
-    `sigla_list:` — Lista de siglas
 
 ### Inclusão de Arquivos
 
