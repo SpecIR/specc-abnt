@@ -4,6 +4,7 @@
 
 local render_utils = require("pipeline.shared.render_utils")
 local classes = require("models.abnt.shared.semantic_classes")
+local post_textual_numbering = require("models.abnt.types.objects.post_textual_numbering")
 
 return {
     kind = "object",
@@ -27,16 +28,7 @@ return {
             -- Page break
             render_utils.add_page_break(blocks, ctx.subject.type_schema.starts_on)
 
-            -- Determine letter index by counting siblings of same type
-            local Queries = require("db.queries.content")
-            local siblings = ctx.data:query_all(Queries.objects_by_spec_type, {
-                spec_id = obj.specification_ref, type_ref = obj.type_ref
-            })
-            local index = 1
-            for i, sib in ipairs(siblings or {}) do
-                if sib.id == obj.id then index = i; break end
-            end
-            local letter = string.char(64 + index)  -- A=1, B=2, ...
+            local letter = post_textual_numbering.section_letter(ctx)
 
             -- Format ABNT title: "APÊNDICE A – Title"
             local user_title = obj.title_text or ""

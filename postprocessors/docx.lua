@@ -46,13 +46,54 @@ local ABNT_NUMBERING_DEFINITIONS = {
         num_id = "1",
         levels = {
             { ilvl = 0, start = "1", num_fmt = "decimal", lvl_text = "%1", suffix = "space", pstyle = "Heading1" },
-            { ilvl = 1, start = "1", num_fmt = "decimal", lvl_text = "%1.%2", suffix = "space", pstyle = "Heading2", restart_level = 1 },
-            { ilvl = 2, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3", suffix = "space", pstyle = "Heading3", restart_level = 2 },
-            { ilvl = 3, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3.%4", suffix = "space", pstyle = "Heading4", restart_level = 3 },
-            { ilvl = 4, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3.%4.%5", suffix = "space", pstyle = "Heading5", restart_level = 4 },
+            { ilvl = 1, start = "1", num_fmt = "decimal", lvl_text = "%1.%2", suffix = "space", pstyle = "Heading2" },
+            { ilvl = 2, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3", suffix = "space", pstyle = "Heading3" },
+            { ilvl = 3, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3.%4", suffix = "space", pstyle = "Heading4" },
+            { ilvl = 4, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3.%4.%5", suffix = "space", pstyle = "Heading5" },
         }
     },
 }
+
+local POST_TEXTUAL_NUMBERING = {
+    Appendix = {
+        title_patterns = { "^%s*APÊNDICE%s+([A-Z]+)", "^%s*APENDICE%s+([A-Z]+)" },
+        num_id = "20",
+    },
+    Annex = {
+        title_patterns = { "^%s*ANEXO%s+([A-Z]+)" },
+        num_id = "21",
+    },
+}
+
+local function post_textual_levels()
+    return {
+        { ilvl = 0, start = "1", num_fmt = "upperLetter", lvl_text = "", suffix = "nothing" },
+        { ilvl = 1, start = "1", num_fmt = "decimal", lvl_text = "%1.%2", suffix = "space" },
+        { ilvl = 2, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3", suffix = "space" },
+        { ilvl = 3, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3.%4", suffix = "space" },
+        { ilvl = 4, start = "1", num_fmt = "decimal", lvl_text = "%1.%2.%3.%4.%5", suffix = "space" },
+    }
+end
+
+table.insert(ABNT_NUMBERING_DEFINITIONS, {
+    abstract_num_id = "20",
+    nsid = "AB170D20",
+    tmpl = "AB170E20",
+    name = "AppendixBodyNumbering",
+    multi_level_type = "multilevel",
+    num_id = POST_TEXTUAL_NUMBERING.Appendix.num_id,
+    levels = post_textual_levels(),
+})
+
+table.insert(ABNT_NUMBERING_DEFINITIONS, {
+    abstract_num_id = "21",
+    nsid = "AB180D21",
+    tmpl = "AB180E21",
+    name = "AnnexBodyNumbering",
+    multi_level_type = "multilevel",
+    num_id = POST_TEXTUAL_NUMBERING.Annex.num_id,
+    levels = post_textual_levels(),
+})
 
 -- Heading style to numbering level mapping
 local ABNT_HEADING_MAP = {
@@ -347,6 +388,196 @@ function M.fix_figures(content, log)
 
     if figure_count > 0 then
         log.debug('[ABNT-FIGURES] Centered %d figure(s), added keepNext to %d', figure_count, keepnext_count)
+    end
+
+    return xml.serialize(doc)
+end
+
+---Ask Word to paginate float blocks as a group when caption/image/source are adjacent.
+---This is not absolute floating placement; it prevents stranded captions/sources and
+---gives Word a better unit to keep on the declaration page when there is room.
+---@param content string document.xml content
+---@param log table Logger instance
+---@return string Modified content
+function M.keep_float_blocks_together(content, log)
+    local doc = xml.parse(content)
+    if not doc or not doc.root then
+        log.warn('[ABNT-FLOATS] Failed to parse document.xml')
+        return content
+    end
+
+    local body = xml.find_child(doc.root, "w:body")
+    if not body then
+        log.warn('[ABNT-FLOATS] Could not find w:body')
+        return content
+    end
+
+    local caption_styles = {
+        ImageCaption = true,
+        Caption = true,
+    }
+    local source_styles = {
+        Source = true,
+        FigureSource = true,
+    }
+
+    local function is_para(node)
+        return node and node.type == "element" and (node.name == "w:p" or node.name == "p")
+    end
+
+    local function has_drawing(p)
+        return #xml.find_by_name(p, "w:drawing") > 0
+    end
+
+    local function add_keep_next(p)
+        local pPr = xml.find_child(p, "w:pPr")
+        if not pPr then
+            pPr = xml.node("w:pPr")
+            xml.insert_child(p, pPr, 1)
+        end
+        if not xml.find_child(pPr, "w:keepNext") then
+            xml.add_child(pPr, xml.node("w:keepNext"))
+            return true
+        end
+        return false
+    end
+
+    local count = 0
+    local kids = body.kids or {}
+    for i, node in ipairs(kids) do
+        if is_para(node) then
+            local style = get_para_style(node)
+            local next_node = kids[i + 1]
+            if caption_styles[style] and is_para(next_node) and has_drawing(next_node) then
+                if add_keep_next(node) then count = count + 1 end
+            elseif has_drawing(node) and is_para(next_node) and source_styles[get_para_style(next_node)] then
+                if add_keep_next(node) then count = count + 1 end
+            end
+        end
+    end
+
+    if count > 0 then
+        log.debug('[ABNT-FLOATS] Added keepNext to %d float paragraph(s)', count)
+    end
+
+    return xml.serialize(doc)
+end
+
+---Apply appendix/annex child heading numbering as A.1, A.1.1, etc.
+---The visible APENDICE/ANEXO title remains manually rendered; internally it
+---consumes hidden list level 0 so Word has the letter counter for descendants.
+---@param content string document.xml content
+---@param log table Logger instance
+---@return string Modified content
+function M.apply_appendix_annex_heading_numbering(content, log)
+    local doc = xml.parse(content)
+    if not doc or not doc.root then
+        log.warn('[ABNT-APPENDIX] Failed to parse document.xml')
+        return content
+    end
+
+    local body = xml.find_child(doc.root, "w:body")
+    if not body then
+        log.warn('[ABNT-APPENDIX] Could not find w:body')
+        return content
+    end
+
+    local function paragraph_text(p)
+        local parts = {}
+        for _, t in ipairs(xml.find_by_name(p, "w:t")) do
+            local kids = t.kids or {}
+            for _, kid in ipairs(kids) do
+                if kid.type == "text" and kid.value then
+                    table.insert(parts, kid.value)
+                end
+            end
+        end
+        return table.concat(parts)
+    end
+
+    local function find_title_kind(text)
+        for kind, config in pairs(POST_TEXTUAL_NUMBERING) do
+            for _, pattern in ipairs(config.title_patterns) do
+                if text:match(pattern) then
+                    return kind
+                end
+            end
+        end
+        return nil
+    end
+
+    local function add_num_pr(p, ilvl, num_id)
+        local pPr = xml.find_child(p, "w:pPr")
+        if not pPr then
+            pPr = xml.node("w:pPr")
+            xml.insert_child(p, pPr, 1)
+        end
+
+        local existing = xml.find_child(pPr, "w:numPr")
+        if existing then
+            xml.remove_child(pPr, existing)
+        end
+
+        local numPr = xml.node("w:numPr", {}, {
+            xml.node("w:ilvl", {["w:val"] = tostring(ilvl)}),
+            xml.node("w:numId", {["w:val"] = tostring(num_id)}),
+        })
+
+        local insert_pos = 1
+        for i, kid in ipairs(pPr.kids or {}) do
+            if kid.name == "pStyle" or
+               kid.name == "w:pStyle" or
+               (kid.nsPrefix and kid.nsPrefix .. ":" .. kid.name == "w:pStyle") then
+                insert_pos = i + 1
+                break
+            end
+        end
+        xml.insert_child(pPr, numPr, insert_pos)
+    end
+
+    local function set_para_style(p, style)
+        local pPr = xml.find_child(p, "w:pPr")
+        if not pPr then return end
+        local pStyle = xml.find_child(pPr, "w:pStyle")
+        if pStyle then
+            xml.set_attr(pStyle, "w:val", style)
+        end
+    end
+
+    local changed = 0
+    local active_kind = nil
+    local active_base_heading_level = nil
+
+    for _, node in ipairs(body.kids or {}) do
+        if node.type == "element" and (node.name == "w:p" or node.name == "p") then
+            local style = get_para_style(node)
+            local text = paragraph_text(node)
+            local title_kind = find_title_kind(text)
+            if title_kind then
+                active_kind = title_kind
+                active_base_heading_level = nil
+                local config = POST_TEXTUAL_NUMBERING[active_kind]
+                add_num_pr(node, 0, config.num_id)
+                changed = changed + 1
+            else
+                local level = style and style:match("^Heading([1-5])$")
+                if active_kind and level then
+                    level = tonumber(level)
+                    if not active_base_heading_level then
+                        active_base_heading_level = level
+                    end
+                    local relative_level = math.max(1, math.min(4, level - active_base_heading_level + 1))
+                    local config = POST_TEXTUAL_NUMBERING[active_kind]
+                    set_para_style(node, "Heading" .. tostring(relative_level + 1))
+                    add_num_pr(node, relative_level, config.num_id)
+                    changed = changed + 1
+                end
+            end
+        end
+    end
+
+    if changed > 0 then
+        log.debug('[ABNT-APPENDIX] Applied appendix/annex numbering to %d paragraph(s)', changed)
     end
 
     return xml.serialize(doc)
@@ -988,6 +1219,9 @@ function M.process_document(content, _config, log, rels_content)
     -- Center-align figures
     content = M.fix_figures(content, log)
 
+    -- Keep adjacent caption/image/source paragraphs together during Word pagination
+    content = M.keep_float_blocks_together(content, log)
+
     -- Replace configured cover/catalog/approval markers with full-page drawings.
     content = replace_pretextual_markers(content, _config, log)
 
@@ -996,6 +1230,9 @@ function M.process_document(content, _config, log, rels_content)
 
     -- Add heading numbering references
     content = heading_numberer.apply_numbering(content, ABNT_HEADING_MAP, log)
+
+    -- Appendix/annex body headings use the post-textual letter as their parent level
+    content = M.apply_appendix_annex_heading_numbering(content, log)
 
     -- Inject section properties with header references
     if rels_content then

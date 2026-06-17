@@ -1,13 +1,13 @@
-# Build the ABNT document and publish the DOCX as a GitHub release on every
-# push to main.
+# Build the ABNT document and publish the DOCX as a GitHub release after the
+# Docker image workflow succeeds on main.
 #
 # This repository doubles as a TEMPLATE for writing ABNT documents:
 #   1. Fork it (or "Use this template").
 #   2. Write your document in a directory containing a project.yaml
 #      (the default is examples/ — see PROJECT_DIR below).
-#   3. Push to main. This workflow builds the DOCX with the ready-made
-#      ghcr.io/specir/specc-abnt image (no Docker build needed in your fork)
-#      and attaches it to a release.
+#   3. Push to main. After the model image is built and published, this
+#      workflow builds the DOCX with ghcr.io/specir/specc-abnt:latest and
+#      attaches it to a release.
 #
 # To extend: change PROJECT_DIR to your document directory, or add more
 # directories to the build step — every *.docx found under <dir>/build/ is
@@ -15,8 +15,10 @@
 name: Publish Document
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Build, Test, and Publish"]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 env:
@@ -28,12 +30,17 @@ env:
 
 jobs:
   build-and-release:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
 
       - name: Build document
         run: |
@@ -59,4 +66,4 @@ jobs:
           name: Document build ${{ github.run_number }}
           files: release-artifacts/*
           body: |
-            DOCX built from ${{ github.sha }} by SpecCompiler (ABNT model).
+            DOCX built from ${{ env.SOURCE_SHA }} by SpecCompiler (ABNT model).
