@@ -23,7 +23,7 @@ A [fig:capybara-limitada](#) usa a mesma imagem do exemplo inicial, mas com altu
 máxima definida para deixar mais espaço para texto, legenda e fonte na página.
 
 ```fig:capybara-limitada{caption="Capivara com altura limitada para composição da página" source="Autor" height="7cm"}
-assets/capybara.jpg
+../assets/capybara.jpg
 ```
 
 ### Gráficos
@@ -133,5 +133,5 @@ source="@silva2024",Fonte: (SILVA 2024) — via citeproc
 Exemplo com citação bibliográfica:
 
 ```fig:grafico{caption="Capivara — exemplo de figura com fonte por citação" source="@ibge1993"}
-assets/capybara.jpg
+../assets/capybara.jpg
 ```

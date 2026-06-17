@@ -24,6 +24,10 @@
 
 ## Folha de rosto
 
+## Ficha Catalográfica
+
+## Folha de Aprovação
+
 ## Dedicatória
 
 Este documento é dedicado a todos que buscam uma forma mais simples de criar trabalhos acadêmicos sem abrir mão da conformidade com as normas ABNT.

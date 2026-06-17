@@ -1,28 +1,28 @@
 ## Introdução
 
-O Markdown conquistou a escrita acadêmica por sua simplicidade: uma sintaxe minimalista que permite ao autor concentrar-se no conteúdo, não na formatação. Ferramentas como Limarka [limarka](@cite), Quarto [quarto](@cite) e RMarkdown prometem o melhor dos dois mundos—escrever em Markdown, obter documentos academicamente formatados. Porém, há um paradoxo fundamental: quase todas essas ferramentas dependem do LaTeX como backend para geração de PDF. O autor escreve em Markdown, mas o "último quilômetro" é sempre LaTeX.
+O Markdown conquistou a escrita acadêmica por sua simplicidade. Uma sintaxe minimalista que permite ao autor concentrar-se no conteúdo, não na formatação. Ferramentas como Limarka [limarka](@cite), Quarto [quarto](@cite) e RMarkdown prometem o melhor dos dois mundos—escrever em Markdown, obter documentos academicamente formatados. Porém, há um paradoxo fundamental, todas essas ferramentas dependem do LaTeX como backend para geração de PDF.
 
-Essa dependência cria uma **abstração vazada**. Quando o documento requer formatação específica—margens ABNT, capas institucionais, fichas catalográficas—o autor é frequentemente forçado a injetar código LaTeX diretamente no Markdown, quebrando a promessa de separação entre conteúdo e apresentação. A necessidade de instalar uma distribuição TeX completa (aproximadamente 4GB) e eventualmente depurar erros crípticos de compilação LaTeX contradiz a simplicidade prometida pelo Markdown.
+Essa dependência cria uma **abstração vazada**. Quando o documento requer formatação específica —margens ABNT, capas institucionais, fichas catalográficas— o autor é frequentemente forçado a injetar código LaTeX diretamente no Markdown, quebrando a promessa de separação entre conteúdo e apresentação. A necessidade de instalar uma distribuição TeX completa (aproximadamente 4GB) e eventualmente depurar erros crípticos de compilação LaTeX contradiz a simplicidade prometida pelo Markdown.
 
-Há ainda o **problema do formato de saída**. LaTeX é amplamente utilizado na engenharia acadêmica—e praticamente só lá. Periódicos científicos aceitam submissões em Word. Escritórios de transferência tecnológica trabalham com Word. Equipes de P&D em indústria colaboram em Word. O documento que realmente circula, que é revisado por orientadores, avaliado por bancas e arquivado em repositórios institucionais, é quase sempre um arquivo `.docx`. LaTeX produz PDFs elegantes, mas PDFs são destinos finais—não documentos de trabalho.
+Há ainda o problema do formato de saída. LaTeX é amplamente utilizado na engenharia acadêmica — e praticamente só lá. Periódicos científicos (de outras áreas) normalmente aceitam submissões em Word. Escritórios de transferência tecnológica trabalham com Word. Equipes de P&D em indústria colaboram em Word. O documento que realmente circula, é quase sempre um arquivo `.docx`. LaTeX produz PDFs elegantes, mas PDFs são destinos finais — não documentos de trabalho.
 
-O `sigla: SpecCompiler (specc)` propõe uma abordagem diferente: **eliminar completamente o LaTeX da cadeia de produção**. O pipeline Markdown → SQLite → Pandoc → `sigla: Office Open XML (OOXML)` gera documentos DOCX nativos, editáveis, e em conformidade com as normas ABNT—sem dependências pesadas ou conhecimento de LaTeX. Similar em objetivo ao (ABNabnTeX) [abntex2classe](@cite), mas fundamentalmente diferente em implementação.
+O `sigla: SpecCompiler (specc)` propõe uma abordagem diferente: **eliminar completamente o LaTeX da cadeia de produção**. O pipeline Markdown → specc → `sigla: Office Open XML (OOXML)` gera documentos DOCX nativos, editáveis, e em conformidade com as normas ABNT. Similar em objetivo e resultados ao (ABNabnTeX) [abntex2classe](@cite), mas fundamentalmente diferente em implementação.
 
-O SpecCompiler foi projetado originalmente para **engenharia de requisitos**—rastrear requisitos, casos de verificação e decisões de design em projetos de software crítico. Porém, ao tratar normas de publicação científica (como ABNT NBR 14724) como **especificações formais**, o sistema se adapta naturalmente à escrita acadêmica. O mesmo motor que valida rastreabilidade de requisitos valida a estrutura de uma monografia.
+O SpecCompiler foi projetado originalmente para **engenharia de requisitos** — rastrear requisitos, casos de verificação e decisões de design em projetos de software crítico. Porém, ao tratar normas de publicação científica (como ABNT NBR 14724) como **especificações formais**, o sistema se adapta naturalmente à escrita acadêmica. O mesmo motor que valida rastreabilidade de requisitos valida a estrutura de uma monografia.
 
 Essa convergência reflete uma verdade mais profunda: **documentação e relatórios são faces da mesma moeda**. Uma especificação de requisitos de software e uma dissertação de mestrado compartilham a necessidade de estrutura verificável, referências cruzadas consistentes, e conformidade com normas.
 
 Este documento demonstra, de forma prática, como utilizar o SpecCompiler para criar uma monografia. Cada seção é um exemplo vivo das funcionalidades disponíveis, conforme ilustra a [fig:capybara](#).
 
 ```fig:capybara{caption="Capivara descansando - exemplo de figura com legenda" source="Autor"}
-assets/capybara.jpg
+../assets/capybara.jpg
 ```
 
 ### Por que SpecCompiler?
 
-O ecossistema de ferramentas Markdown para trabalhos acadêmicos—Limarka [limarka](@cite), Quarto [quarto](@cite), RMarkdown—compartilha uma característica comum: todas utilizam LaTeX como backend para geração de PDF. Isso significa que, apesar da simplicidade do Markdown na superfície, o autor ainda precisa de uma distribuição TeX completa instalada, e eventualmente precisará depurar erros de LaTeX quando a abstração "vazar".
+O ecossistema de ferramentas Markdown para trabalhos acadêmicos—Limarka [limarka](@cite), Quarto [quarto](@cite), RMarkdown—compartilha uma característica comum, todas utilizam LaTeX como backend para geração de PDF. Isso significa que, apesar da simplicidade do Markdown na superfície, o autor ainda precisa de uma distribuição TeX completa instalada, e eventualmente precisará depurar erros de LaTeX quando a abstração "vazar".
 
-O SpecCompiler adota uma abordagem diferente: **não há LaTeX no pipeline**. O [listing:sintaxe-comparacao](#) ilustra a diferença de sintaxe entre LaTeX e Markdown:
+O SpecCompiler adota uma abordagem diferente, não há LaTeX no pipeline. O [listing:sintaxe-comparacao](#) ilustra a diferença de sintaxe entre LaTeX e Markdown:
 
 ```listing:sintaxe-comparacao{caption="Comparação de sintaxe: LaTeX vs Markdown" source="Elaboração própria"}
 LATEX                                   MARKDOWN
@@ -43,7 +43,7 @@ LATEX                                   MARKDOWN
 \cite{autor2024}                       [autor2024](@cite)
 ```
 
-As principais vantagens do SpecCompiler incluem:
+As principais funcionalidades do SpecCompiler incluem:
 
 1. **Sem dependência LaTeX**: O pipeline utiliza exclusivamente Pandoc e OOXML—nenhuma distribuição TeX necessária
 2. **Saída editável e colaborativa**: Diferentemente do PDF (formato de visualização), o DOCX permite controle de alterações, comentários em linha, e revisão por orientadores usando ferramentas familiares (Word, LibreOffice, Google Docs)
@@ -63,13 +63,13 @@ No SpecCompiler, quando você escreve `## Introdução`, o sistema:
 3. Valida que aparece **após** elementos pré-textuais
 4. Garante que há **exatamente uma** introdução (`max_count: 1`)
 
-Os tipos não são declarados em JSON—cada tipo ABNT é um módulo Lua em `types/objects/`, carregado no build e compilado para o Spec-IR (SQLite). Por exemplo, o tipo `ABSTRACT` em `types/objects/abstract.lua` define:
+Cada tipo ABNT é um módulo Lua em `types/objects/`, carregado no build e compilado para o Spec-IR (SQLite). Por exemplo, o tipo `ABSTRACT` em `types/objects/abstract.lua` define:
 
 - `implicit_aliases`: ["Resumo", "Abstract", "Resume", "Resumen"]
 - `extends`: "PRE_TEXTUAL"
 - `attributes`: [{ name: "keywords", type: "STRING" }]
 
-Especificações bem tipadas não falham em tempo de compilação.
+Especificações bem tipadas não falham.
 
 ### Extensões ao Markdown
 
@@ -88,18 +88,6 @@ O SpecCompiler estende o Markdown com sintaxe adicional para suprir essas necess
 - **Notas de rodapé**: Sintaxe nativa do Pandoc[^1] para notas de rodapé numeradas automaticamente
 
 [^1]: Notas de rodapé são suportadas nativamente via Pandoc `commonmark_x`. Esta é uma nota de exemplo que aparecerá no rodapé da página.
-
-Este próprio exemplo usa a diretiva `include`: o arquivo principal mantém metadados,
-elementos pré-textuais e o sumário, enquanto os capítulos ficam em arquivos Markdown
-separados dentro de `chapters/`. A expansão ocorre antes da análise estrutural, então
-referências cruzadas, numeração de seções, figuras e apêndices continuam funcionando
-como se todo o conteúdo estivesse em um único arquivo.
-
-    ```include
-    chapters/introducao.md
-    chapters/figuras-ilustracoes.md
-    chapters/tabelas-quadros.md
-    ```
 
 As seções seguintes demonstram essas extensões em uso prático.
 
