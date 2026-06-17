@@ -13,7 +13,7 @@
 ---    - bottom-aligned -> Wraps content in table with vAlign=bottom
 ---
 ---@module models.abnt.filters.docx
----@author SpecDown Team
+---@author SpecCompiler Team
 ---@license MIT
 
 local xml = require("infra.format.xml")

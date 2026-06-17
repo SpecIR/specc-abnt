@@ -37,6 +37,24 @@ This repository doubles as a template for writing your own ABNT document with au
 
 To point the workflow at your own document, edit `PROJECT_DIR` at the top of `.github/workflows/publish-document.yml`.
 
+## Opening the generated document (update fields)
+
+Everything that auto-numbers in the DOCX is driven by Word fields: the
+**Sumário** (table of contents), the **Lista de Figuras / Tabelas**, and the
+figure/table/section numbers in captions and cross-references. Word shows the
+*cached* value of a field until it is recalculated, so a freshly built file can
+open with empty lists or with every caption showing "1".
+
+After opening the DOCX, update all fields once:
+
+1. Select the whole document — **Ctrl+A**.
+2. Update fields — **F9**. If a dialog appears for the table of contents, choose
+   **Update entire table**.
+
+This populates the Sumário and the lists and renumbers the figures, tables, and
+sections. (In LibreOffice Writer the equivalent is **Tools ▸ Update ▸ Update
+All**.)
+
 ## Output formats
 
 The ABNT model customizes **DOCX** and **LaTeX** output: `filters/{docx,latex}.lua`

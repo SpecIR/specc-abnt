@@ -3,7 +3,6 @@ name: Build, Test, and Publish
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -11,10 +10,12 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   BASE_IMAGE: ghcr.io/specir/speccompiler:latest
+  TEST_IMAGE: specc-abnt:test
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Build the specc-abnt image, smoke-test, and publish to GHCR.
+  # Pull requests build and test the image locally.
+  # Merges to main build, test, and then publish to GHCR.
   # ---------------------------------------------------------------------------
   build-and-publish:
     runs-on: ubuntu-latest
@@ -31,14 +32,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -46,26 +39,61 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=
-            type=ref,event=tag
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
 
-      - name: Build and push
-        id: build-push
+      - name: Build image for tests
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          load: ${{ github.event_name == 'pull_request' }}
+          push: false
+          load: true
+          tags: ${{ env.TEST_IMAGE }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: BASE_IMAGE=${{ env.BASE_IMAGE }}
+          cache-from: type=gha,scope=abnt-model
+          cache-to: type=gha,mode=max,scope=abnt-model
+
+      - name: Smoke test
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            "${TEST_IMAGE}" \
+            build examples/project.yaml
+
+          test -f examples/build/monografia.docx
+
+      - name: Run model tests
+        run: |
+          docker run --rm \
+            -e SPECCOMPILER_HOME=/opt/speccompiler \
+            --entrypoint bash \
+            "${TEST_IMAGE}" \
+            /opt/speccompiler/tests/run.sh abnt-tests
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: BASE_IMAGE=${{ env.BASE_IMAGE }}
-          cache-from: type=gha,scope=main
-          cache-to: type=gha,mode=max,scope=main
+          cache-from: type=gha,scope=abnt-model
+          cache-to: type=gha,mode=max,scope=abnt-model
 
       - name: Make package public
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -76,28 +104,5 @@ jobs:
             "https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME}" \
             -d '{"visibility":"public"}' || echo "::warning::Could not set package visibility to public"
 
-      - name: Smoke test
-        run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
-
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -v "${{ github.workspace }}:/workspace" \
-            -w /workspace \
-            "${IMAGE}" \
-            build examples/project.yaml
-
-          test -f examples/build/monografia.docx
-
-      - name: Run model tests
-        run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}"
-
-          docker run --rm \
-            -e SPECCOMPILER_HOME=/opt/speccompiler \
-            --entrypoint bash \
-            "${IMAGE}" \
-            /opt/speccompiler/tests/run.sh abnt-tests
-
   # The example DOCX is published as a GitHub release by
-  # .github/workflows/publish-document.yml (on every push to main).
+  # .github/workflows/publish-document.yml after this workflow succeeds on main.

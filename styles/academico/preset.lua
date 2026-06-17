@@ -1,4 +1,4 @@
----ABNT NBR 14724:2011 Compliant Style Preset for SpecDown v2.
+---ABNT NBR 14724:2011 Compliant Style Preset for SpecCompiler.
 ---Based on abntex2 LaTeX class specifications for Brazilian academic documents.
 ---
 ---Key specifications:
