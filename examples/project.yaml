@@ -19,6 +19,3 @@ bibliography: references.bib
 outputs:
   - format: docx
     path: "{spec_id}.docx"
-  - format: latex
-    path: "{spec_id}.tex"
-    top_level_division: chapter
