@@ -22,8 +22,11 @@ return {
     COVER_ADVISOR      = "cover-advisor",
     COVER_IMAGE_TITLE  = "cover-image-title",
     COVER_IMAGE_AUTHOR = "cover-image-author",
-    COVER_ICMC_TITLE   = "cover-icmc-title",
-    COVER_ICMC_AUTHOR  = "cover-icmc-author",
+    COVER_IMAGE_VERTICAL_ORG = "cover-image-vertical-org",
+    COVER_IMAGE_NATURE = "cover-image-nature",
+    COVER_IMAGE_ADVISOR = "cover-image-advisor",
+    COVER_IMAGE_LOCATION = "cover-image-location",
+    COVER_IMAGE_YEAR = "cover-image-year",
     COVER_LOCATION     = "cover-location",
     COVER_YEAR         = "cover-year",
 

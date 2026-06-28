@@ -9,6 +9,28 @@
 local render_utils = require("pipeline.shared.render_utils")
 local classes = require("models.abnt.shared.semantic_classes")
 
+local function build_preamble(preamble, nature, program, degree)
+    if preamble and preamble ~= "" then
+        return preamble
+    end
+
+    if nature and nature:lower():find("requisito parcial", 1, true) then
+        return nature
+    end
+
+    nature = nature or "Dissertação de mestrado"
+    degree = degree or "Mestre em Ciências"
+    if program and program ~= "" then
+        return string.format(
+            "%s apresentada ao %s como requisito parcial para obtenção do título de %s.",
+            nature,
+            program,
+            degree
+        )
+    end
+    return string.format("%s apresentada como requisito parcial para obtenção do título de %s.", nature, degree)
+end
+
 local function render_body(ctx)
     -- One node-construction rule for this file: the ctx-provided pandoc, same as
     -- the rest of the model. The helpers below close over it.
@@ -39,6 +61,16 @@ local function render_body(ctx)
     local title = get_attr("title")
     local subtitle = get_attr("subtitle")
     local author = get_attr("author")
+    local institution = get_attr("institution")
+    local faculty = get_attr("faculty")
+    local department = get_attr("department")
+    local course = get_attr("course")
+    local nature = get_attr("nature")
+    local preamble = get_attr("preamble")
+    local program = get_attr("program")
+    local degree = get_attr("degree")
+    local advisor = get_attr("advisor")
+    local coadvisor = get_attr("coadvisor")
     local city = get_attr("city")
     local year = get_attr("year")
 
@@ -51,8 +83,20 @@ local function render_body(ctx)
     local use_cover_image = docx.cover_image ~= false and docx.use_cover_image ~= false
     if ctx.format == "docx" and use_cover_image then
         table.insert(blocks, pandoc.RawBlock("speccompiler", "abnt-cover-background"))
+        local vertical_lines = {}
+        for _, value in ipairs({ institution, faculty }) do
+            if value and value ~= "" then vertical_lines[#vertical_lines + 1] = value end
+        end
+        if #vertical_lines > 0 then
+            table.insert(blocks, semantic_div(table.concat(vertical_lines, "\n"), classes.COVER_IMAGE_VERTICAL_ORG))
+        end
         if title then table.insert(blocks, semantic_div(title, classes.COVER_IMAGE_TITLE)) end
         if author then table.insert(blocks, semantic_div(author, classes.COVER_IMAGE_AUTHOR)) end
+        table.insert(blocks, semantic_div(build_preamble(preamble, nature, program or course, degree), classes.COVER_IMAGE_NATURE))
+        if advisor then table.insert(blocks, semantic_div("Orientador: " .. advisor, classes.COVER_IMAGE_ADVISOR)) end
+        if coadvisor then table.insert(blocks, semantic_div("Coorientador: " .. coadvisor, classes.COVER_IMAGE_ADVISOR)) end
+        if city then table.insert(blocks, semantic_div(city, classes.COVER_IMAGE_LOCATION)) end
+        if year then table.insert(blocks, semantic_div(year, classes.COVER_IMAGE_YEAR)) end
         return blocks
     end
 
@@ -74,6 +118,11 @@ local function render_body(ctx)
     table.insert(blocks, vertical_space(144))
 
     -- Author at top
+    if institution then table.insert(blocks, semantic_div(institution, classes.COVER_INSTITUTION)) end
+    if faculty then table.insert(blocks, semantic_div(faculty, classes.COVER_DEPARTMENT)) end
+    if department then table.insert(blocks, semantic_div(department, classes.COVER_DEPARTMENT)) end
+    if course then table.insert(blocks, semantic_div(course, classes.COVER_DEPARTMENT)) end
+    table.insert(blocks, vertical_space(720))
     if author then table.insert(blocks, semantic_div(author, classes.COVER_AUTHOR)) end
 
     -- Vertical space to position title (~3.3 inches = 4752 twips)
@@ -82,6 +131,9 @@ local function render_body(ctx)
     -- Title in middle area (22pt font)
     if title then table.insert(blocks, semantic_div(title, classes.COVER_TITLE)) end
     if subtitle then table.insert(blocks, semantic_div(subtitle, classes.COVER_SUBTITLE)) end
+    table.insert(blocks, semantic_div(build_preamble(preamble, nature, program or course, degree), classes.COVER_NATURE))
+    if advisor then table.insert(blocks, semantic_div("Orientador: " .. advisor, classes.COVER_ADVISOR)) end
+    if coadvisor then table.insert(blocks, semantic_div("Coorientador: " .. coadvisor, classes.COVER_ADVISOR)) end
 
     -- City/Year - absolutely positioned from page bottom by DOCX filter
     -- No vertical space needed - they will be anchored to page bottom

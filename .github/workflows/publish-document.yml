@@ -1,4 +1,4 @@
-# Build the ABNT document and publish the DOCX as a GitHub release after the
+# Build the ABNT document and publish the DOCX/PDF as a GitHub release after the
 # Docker image workflow succeeds on main.
 #
 # This repository doubles as a TEMPLATE for writing ABNT documents:
@@ -6,11 +6,11 @@
 #   2. Write your document in a directory containing a project.yaml
 #      (the default is examples/ — see PROJECT_DIR below).
 #   3. Push to main. After the model image is built and published, this
-#      workflow builds the DOCX with ghcr.io/specir/specc-abnt:latest and
-#      attaches it to a release.
+#      workflow builds the DOCX/PDF with ghcr.io/specir/specc-abnt:libreoffice
+#      and attaches them to a release.
 #
 # To extend: change PROJECT_DIR to your document directory, or add more
-# directories to the build step — every *.docx found under <dir>/build/ is
+# directories to the build step — DOCX/PDF artifacts under <dir>/build/ are
 # attached to the release.
 name: Publish Document
 
@@ -22,9 +22,9 @@ on:
   workflow_dispatch:
 
 env:
-  # Ready-made SpecCompiler + ABNT image. Forks keep this default; point it
-  # at your own image only if you extend the model itself.
-  SPECC_IMAGE: ghcr.io/specir/specc-abnt:latest
+  # Ready-made SpecCompiler + ABNT + LibreOffice image. Forks keep this default;
+  # point it at your own image only if you extend the model itself.
+  SPECC_IMAGE: ghcr.io/specir/specc-abnt:libreoffice
   # Directory containing your project.yaml.
   PROJECT_DIR: examples
 
@@ -56,8 +56,36 @@ jobs:
           mkdir -p release-artifacts
           # reference.docx is the intermediate pandoc style reference — skip it
           find "${PROJECT_DIR}/build" -maxdepth 1 -name '*.docx' ! -name 'reference.docx' -exec cp {} release-artifacts/ \;
+          find "${PROJECT_DIR}/build" -maxdepth 1 -name '*.pdf' -exec cp {} release-artifacts/ \;
           ls -l release-artifacts
           test -n "$(ls release-artifacts)"
+
+      - name: Deploy PDF to GitHub Pages
+        run: |
+          test -f "${PROJECT_DIR}/build/monografia.pdf"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          rm -rf _gh-pages
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git worktree add _gh-pages origin/gh-pages
+          else
+            git worktree add --detach _gh-pages
+            git -C _gh-pages checkout --orphan gh-pages
+          fi
+
+          find _gh-pages -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp "${PROJECT_DIR}/build/monografia.pdf" _gh-pages/monografia.pdf
+          touch _gh-pages/.nojekyll
+
+          git -C _gh-pages add -A
+          if git -C _gh-pages diff --cached --quiet; then
+            echo "No GitHub Pages changes to publish."
+          else
+            git -C _gh-pages commit -m "Publish ABNT PDF example"
+            git -C _gh-pages push origin HEAD:gh-pages
+          fi
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -66,4 +94,6 @@ jobs:
           name: Document build ${{ github.run_number }}
           files: release-artifacts/*
           body: |
-            DOCX built from ${{ env.SOURCE_SHA }} by SpecCompiler (ABNT model).
+            DOCX/PDF built from ${{ env.SOURCE_SHA }} by SpecCompiler (ABNT model).
+
+            Stable PDF: https://specir.github.io/specc-abnt/monografia.pdf

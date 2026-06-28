@@ -85,6 +85,7 @@ O SpecCompiler estende o Markdown com sintaxe adicional para suprir essas necess
 - **Gráficos**: Blocos `chart:` que consultam o banco de dados para gerar visualizações
 - **Diagramas**: Blocos `puml:` para diagramas UML via PlantUML
 - **Inclusão de arquivos**: Blocos `include` para dividir documentos longos em capítulos e apêndices separados
+- **Fechamento de seção**: Uma quebra temática `----` encerra a seção atual sem abrir um novo título, fazendo o conteúdo seguinte pertencer ao capítulo pai (o marcador é consumido e não vira linha horizontal)
 - **Notas de rodapé**: Sintaxe nativa do Pandoc[^1] para notas de rodapé numeradas automaticamente
 
 [^1]: Notas de rodapé são suportadas nativamente via Pandoc `commonmark_x`. Esta é uma nota de exemplo que aparecerá no rodapé da página.
@@ -98,3 +99,7 @@ Este tutorial segue a estrutura padrão de uma monografia conforme NBR 14724 [NB
 - **Elementos pré-textuais**: Capa, folha de rosto, resumo, listas, sumário
 - **Elementos textuais**: Introdução, desenvolvimento, conclusão
 - **Elementos pós-textuais**: Referências, apêndices, anexos
+
+----
+
+A quebra temática acima encerra a subseção *Estrutura deste Documento*: este parágrafo de fechamento pertence ao escopo do capítulo *Introdução*, e não à subseção anterior. Os capítulos seguintes demonstram cada extensão em uso prático.

@@ -17,6 +17,28 @@ local function vertical_space(twips)
     return pandoc.RawBlock("specdown", "vertical-space:" .. tostring(twips))
 end
 
+local function build_preamble(preamble, nature, program, degree)
+    if preamble and preamble ~= "" then
+        return preamble
+    end
+
+    if nature and nature:lower():find("requisito parcial", 1, true) then
+        return nature
+    end
+
+    nature = nature or "Dissertação de mestrado"
+    degree = degree or "Mestre em Ciências"
+    if program and program ~= "" then
+        return string.format(
+            "%s apresentada ao %s como requisito parcial para obtenção do título de %s.",
+            nature,
+            program,
+            degree
+        )
+    end
+    return string.format("%s apresentada como requisito parcial para obtenção do título de %s.", nature, degree)
+end
+
 return {
     kind = "object",
     schema = {
@@ -51,7 +73,10 @@ return {
             local title = get_attr("title")
             local subtitle = get_attr("subtitle")
             local nature = get_attr("nature")
-            local institution = get_attr("institution")
+            local preamble = get_attr("preamble")
+            local course = get_attr("course")
+            local program = get_attr("program")
+            local degree = get_attr("degree")
             local advisor = get_attr("advisor")
             local coadvisor = get_attr("coadvisor")
             local city = get_attr("city")
@@ -69,9 +94,8 @@ return {
             -- 1. Author at top (centered)
             -- 2. Title (centered, bold)
             -- 3. Nature/Preâmbulo (right-aligned with indent)
-            -- 4. Institution (centered)
-            -- 5. Advisor (with label, indented)
-            -- 6. Location and year at bottom (centered)
+            -- 4. Advisor (with label, indented)
+            -- 5. Location and year at bottom (centered)
             --
             -- A4 usable height: ~13500 twips. Content: ~5000 twips (with multi-line elements).
             -- Available spacing: ~8500 twips total, distributed conservatively.
@@ -92,7 +116,7 @@ return {
             table.insert(body_blocks, vertical_space(2160))
 
             -- Nature/Preâmbulo (right-aligned with indent)
-            if nature then table.insert(body_blocks, semantic_div(nature, classes.TITLEPAGE_NATURE)) end
+            table.insert(body_blocks, semantic_div(build_preamble(preamble, nature, program or course, degree), classes.TITLEPAGE_NATURE))
 
             -- Space before advisor (~1 inch = 1440 twips)
             -- Note: abntex2 puts orientador directly under preambulo without institution in between

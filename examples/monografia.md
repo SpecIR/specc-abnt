@@ -14,7 +14,9 @@
 
 > advisor: Este documento é auto-demonstrativo
 
-> nature: Documento de exemplo e tutorial que demonstra as funcionalidades do template ABNT do SpecCompiler para criação de trabalhos acadêmicos conforme as normas da ABNT NBR 14724.
+> nature: Monografia de exemplo
+
+> preamble: Documento de exemplo do template ABNT.
 
 > city: Online
 

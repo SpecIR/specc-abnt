@@ -12,6 +12,7 @@ return {
         description = "Desenvolvimento - development/body chapter (ABNT)",
         extends = "TEXTUAL",
         implicit_aliases = { "Desenvolvimento", "Development" },
+        implicit_alias_level = 2,  -- chapter-level: infer only at H2, not on a same-titled section
         starts_on = "next"  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
     },
     hooks = {

@@ -240,14 +240,16 @@ end
 ---@param position_from_top number Distance from page top in twips
 ---@param width number|nil Optional frame width in twips
 ---@param x number|nil Optional frame X position in twips
+---@param height number|nil Optional frame height in twips
+---@param text_direction string|nil Optional Word text direction (e.g. "btLr")
 ---@return string OOXML
-ooxml_styled_para_positioned_top = function(text, style, position_from_top, width, x)
+ooxml_styled_para_positioned_top = function(text, style, position_from_top, width, x, height, text_direction)
     local runs = {}
     local first = true
     for line in (tostring(text or "") .. "\n"):gmatch("(.-)\n") do
         if not first then
             runs[#runs + 1] = xml.node("w:r", {}, { xml.node("w:br") })
-end
+        end
         if line ~= "" then
             runs[#runs + 1] = xml.node("w:r", {}, {
                 xml.node("w:t", {["xml:space"] = "preserve"}, {xml.text(line)})
@@ -271,12 +273,21 @@ end
     if width then
         frame_attrs["w:w"] = tostring(width)
     end
+    if height then
+        frame_attrs["w:h"] = tostring(height)
+        frame_attrs["w:hRule"] = "exact"
+    end
+
+    local ppr_children = {
+        xml.node("w:pStyle", {["w:val"] = style}),
+        xml.node("w:framePr", frame_attrs),
+    }
+    if text_direction then
+        ppr_children[#ppr_children + 1] = xml.node("w:textDirection", {["w:val"] = text_direction})
+    end
 
     local children = {
-        xml.node("w:pPr", {}, {
-            xml.node("w:pStyle", {["w:val"] = style}),
-            xml.node("w:framePr", frame_attrs),
-        })
+        xml.node("w:pPr", {}, ppr_children)
     }
     append_all(children, runs)
     return xml.serialize_element(xml.node("w:p", {}, children))
@@ -357,8 +368,11 @@ local SEMANTIC_CLASS_MAP = {
     [classes.COVER_ADVISOR]     = { style = "CoverAdvisor", uppercase = false },
     [classes.COVER_IMAGE_TITLE]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
     [classes.COVER_IMAGE_AUTHOR] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
-    [classes.COVER_ICMC_TITLE]  = { style = "CoverImageTitle", uppercase = true, position_from_top = 3685, position_width = 8164, position_x = 3458 },
-    [classes.COVER_ICMC_AUTHOR] = { style = "CoverImageAuthor", uppercase = false, position_from_top = 7350, position_width = 7370, position_x = 4592 },
+    [classes.COVER_IMAGE_VERTICAL_ORG] = { style = "CoverImageVerticalOrg", uppercase = true, position_from_top = 3350, position_width = 1050, position_height = 9300, position_x = 860, text_direction = "btLr" },
+    [classes.COVER_IMAGE_NATURE] = { style = "CoverImageNature", uppercase = false, position_from_top = 7960, position_width = 7370, position_x = 4592 },
+    [classes.COVER_IMAGE_ADVISOR] = { style = "CoverImageAdvisor", uppercase = false, position_from_top = 9100, position_width = 7370, position_x = 4592 },
+    [classes.COVER_IMAGE_LOCATION] = { style = "CoverImageLocation", uppercase = false, position_from_bottom = 1100 },
+    [classes.COVER_IMAGE_YEAR] = { style = "CoverImageYear", uppercase = false, position_from_bottom = 600 },
     -- Position city at ~0.76 inches from bottom (1100 twips)
     [classes.COVER_LOCATION]    = { style = "CoverLocation", uppercase = false, position_from_bottom = 1100 },
     -- Position year at ~0.42 inches from bottom (600 twips)
@@ -659,7 +673,7 @@ local function convert_styled_div(div, log)
                     ooxml_styled_para_positioned(text, mapping.style, mapping.position_from_bottom))
             elseif mapping.position_from_top then
                 return pandoc.RawBlock("openxml",
-                    ooxml_styled_para_positioned_top(text, mapping.style, mapping.position_from_top, mapping.position_width, mapping.position_x))
+                    ooxml_styled_para_positioned_top(text, mapping.style, mapping.position_from_top, mapping.position_width, mapping.position_x, mapping.position_height, mapping.text_direction))
             else
                 return pandoc.RawBlock("openxml", ooxml_styled_para(text, mapping.style))
             end

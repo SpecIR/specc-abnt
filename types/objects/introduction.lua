@@ -13,6 +13,7 @@ return {
         extends = "TEXTUAL",
         is_required = true,  -- Mandatory per ABNT NBR 14724
         implicit_aliases = { "Introdução", "Introducao", "Introduction" },
+        implicit_alias_level = 2,  -- chapter-level: infer only at H2, not on a same-titled section
         starts_on = "next"  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
     },
     hooks = {

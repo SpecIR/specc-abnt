@@ -19,6 +19,11 @@ return {
             "Considerações Finais",
             "Consideracoes Finais"
         },
+        -- Chapter-level type: only infer from title at the chapter heading level
+        -- (H2). A same-titled section deeper in the document (e.g. a chapter's
+        -- "### Considerações Finais") stays a SECTION instead of being promoted
+        -- to a conclusion chapter.
+        implicit_alias_level = 2,
         starts_on = "next"  -- Start on next page (odd-page behavior deferred to postprocessor when twoside)
     },
     hooks = {

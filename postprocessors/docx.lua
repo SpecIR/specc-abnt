@@ -129,7 +129,7 @@ local ABNT_BIB_CONFIG = {
     heading_style = nil,
     entry_style = "Reference",
     page_break_before = false,
-    skip_styles = { "Heading", "UnnumberedHeading", "Caption", "Source" }
+    skip_styles = { "Heading", "UnnumberedHeading", "Caption", "Source", "FigureSource", "TableSource" }
 }
 
 -- ABNT header parts configuration
@@ -419,6 +419,7 @@ function M.keep_float_blocks_together(content, log)
     local source_styles = {
         Source = true,
         FigureSource = true,
+        TableSource = true,
     }
 
     local function is_para(node)
@@ -796,7 +797,7 @@ local PRETEXTUAL_IMAGES = {
         marker = "cover-background",
         rid = "rIdAbntCover",
         media = "abnt-cover.png",
-        config_keys = {"cover_image", "cover_background", "icmc_cover_image"},
+        config_keys = {"cover_image", "cover_background"},
         default_asset = "assets/cover.png",
         disable_keys = {"cover_image", "use_cover_image"},
     },
@@ -851,6 +852,19 @@ local function write_binary(path, data)
     return true
 end
 
+local function command_output(cmd)
+    local pipe = io.popen(cmd .. " 2>/dev/null")
+    if not pipe then return nil end
+    local out = pipe:read("*l")
+    pipe:close()
+    if out and out ~= "" then return out end
+    return nil
+end
+
+local function command_exists(name)
+    return command_output("command -v " .. shell_quote(name))
+end
+
 local function model_root()
     local source = (debug.getinfo(1, "S").source or ""):gsub("^@", "")
     return source:gsub("/postprocessors/docx%.lua$", "")
@@ -885,6 +899,35 @@ local function configured_path(config, item)
     return nil
 end
 
+local function source_extension(path)
+    local ext = tostring(path or ""):match("%.([A-Za-z0-9]+)$")
+    if not ext then return "png" end
+    ext = ext:lower()
+    if ext == "jpeg" then return "jpg" end
+    if ext == "pdf" then return "png" end
+    if ext == "png" or ext == "jpg" or ext == "gif" or ext == "bmp" or ext == "tiff" or ext == "tif" then
+        return ext
+    end
+    return "png"
+end
+
+local function media_name_for(config, item)
+    local source = configured_path(config, item)
+    if not source then return item.media end
+    local stem = item.media:gsub("%.[^.]+$", "")
+    return stem .. "." .. source_extension(source)
+end
+
+local function content_type_for_extension(ext)
+    ext = (ext or ""):lower()
+    if ext == "jpg" or ext == "jpeg" then return "image/jpeg" end
+    if ext == "png" then return "image/png" end
+    if ext == "gif" then return "image/gif" end
+    if ext == "bmp" then return "image/bmp" end
+    if ext == "tif" or ext == "tiff" then return "image/tiff" end
+    return "image/png"
+end
+
 local function register_image_relationships(content, config, log)
     local doc = xml.parse(content)
     if not doc or not doc.root then
@@ -906,7 +949,7 @@ local function register_image_relationships(content, config, log)
             xml.add_child(doc.root, xml.node("Relationship", {
                 Id = item.rid,
                 Type = rel_type,
-                Target = "media/" .. item.media,
+                Target = "media/" .. media_name_for(config, item),
             }))
             added = added + 1
         end
@@ -919,19 +962,20 @@ local function register_image_relationships(content, config, log)
 end
 
 local function ensure_image_content_types(content, config)
-    local needs_png = false
-    local needs_jpeg = false
+    local needed = {}
     for _, item in pairs(PRETEXTUAL_IMAGES) do
-        if configured_path(config, item) then
-            if item.media:match("%.png$") then needs_png = true end
-            if item.media:match("%.jpe?g$") then needs_jpeg = true end
+        local source = configured_path(config, item)
+        if source then
+            needed[source_extension(source)] = true
         end
     end
-    if needs_png and not content:match('Extension="png"') then
-        content = content:gsub('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>')
-    end
-    if needs_jpeg and not content:match('Extension="jpg"') then
-        content = content:gsub('</Types>', '<Default Extension="jpg" ContentType="image/jpeg"/></Types>')
+    for ext in pairs(needed) do
+        if not content:match('Extension="' .. ext .. '"') then
+            content = content:gsub(
+                '</Types>',
+                '<Default Extension="' .. ext .. '" ContentType="' .. content_type_for_extension(ext) .. '"/></Types>'
+            )
+        end
     end
     return content
 end
@@ -1050,9 +1094,9 @@ prepare_pretextual_media = function(temp_dir, log, config)
     for _, item in pairs(PRETEXTUAL_IMAGES) do
         local source = configured_path(config, item)
         if source then
-            local dest = media_dir .. "/" .. item.media
+            local dest = media_dir .. "/" .. media_name_for(config, item)
             if prepare_media(source, dest, log) then
-                log.debug("[ABNT-PRETEXTUAL] Prepared media/%s", item.media)
+                log.debug("[ABNT-PRETEXTUAL] Prepared media/%s", media_name_for(config, item))
             end
         end
     end
@@ -1310,6 +1354,354 @@ function M.run(path, config, log)
     return default_pp.postprocess(path, template, log, config)
 end
 
+local function truthy(value)
+    if value == true then return true end
+    if type(value) == "string" then
+        local normalized = value:lower()
+        return normalized == "1" or normalized == "true" or normalized == "yes" or normalized == "on"
+    end
+    return false
+end
+
+local function field_update_enabled(config)
+    local docx = docx_config(config)
+    if docx.update_fields ~= nil then return truthy(docx.update_fields) end
+    if docx.libreoffice_update_fields ~= nil then return truthy(docx.libreoffice_update_fields) end
+    if docx.refresh_fields ~= nil then return truthy(docx.refresh_fields) end
+    return false
+end
+
+local function pdf_export_enabled(config)
+    local docx = docx_config(config)
+    if docx.export_pdf ~= nil then return truthy(docx.export_pdf) end
+    if docx.pdf ~= nil then return truthy(docx.pdf) end
+    if docx.libreoffice_export_pdf ~= nil then return truthy(docx.libreoffice_export_pdf) end
+    return false
+end
+
+local function dirname(path)
+    return tostring(path):match("^(.*)/[^/]+$") or "."
+end
+
+local function default_pdf_path(path)
+    local stem = tostring(path):gsub("%.docx$", "")
+    if stem == path then return path .. ".pdf" end
+    return stem .. ".pdf"
+end
+
+local function pdf_output_path(path, config)
+    local docx = docx_config(config)
+    local configured = docx.pdf_path or docx.export_pdf_path
+    if configured and configured ~= "" then
+        if configured:match("^/") then return configured end
+        return ((config and config.project_root) or ".") .. "/" .. configured
+    end
+    return default_pdf_path(path)
+end
+
+local function make_temp_dir()
+    return command_output("mktemp -d 2>/dev/null")
+end
+
+local function remove_tree(path)
+    if path and path ~= "" then
+        os.execute("rm -rf " .. shell_quote(path))
+    end
+end
+
+local function ensure_parent_dir(path)
+    local dir = dirname(path)
+    if dir and dir ~= "." then
+        os.execute("mkdir -p " .. shell_quote(dir))
+    end
+end
+
+local function replace_file(source, target)
+    local data = read_binary(source)
+    if not data then return false end
+    return write_binary(target, data)
+end
+
+local function python_can_import_uno(python)
+    local ok = os.execute(shell_quote(python) .. " -c " .. shell_quote("import uno") .. " >/dev/null 2>&1")
+    return ok == true or ok == 0
+end
+
+local function find_uno_python()
+    local candidates = {"/usr/bin/python3"}
+    local path_python3 = command_exists("python3")
+    if path_python3 then table.insert(candidates, path_python3) end
+    local path_python = command_exists("python")
+    if path_python then table.insert(candidates, path_python) end
+
+    local seen = {}
+    for _, candidate in ipairs(candidates) do
+        if candidate and not seen[candidate] then
+            seen[candidate] = true
+            if candidate:match("^/") or command_exists(candidate) then
+                if python_can_import_uno(candidate) then
+                    return candidate
+                end
+            end
+        end
+    end
+    return nil
+end
+
+local function write_field_update_script(path)
+    local script = [=[
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import uno
+from com.sun.star.beans import PropertyValue
+
+
+def prop(name, value):
+    item = PropertyValue()
+    item.Name = name
+    item.Value = value
+    return item
+
+
+def file_url(path):
+    return Path(path).resolve().as_uri()
+
+
+def connect(port):
+    local_ctx = uno.getComponentContext()
+    resolver = local_ctx.ServiceManager.createInstanceWithContext(
+        "com.sun.star.bridge.UnoUrlResolver", local_ctx
+    )
+    url = f"uno:socket,host=127.0.0.1,port={port};urp;StarOffice.ComponentContext"
+    deadline = time.time() + 30
+    last_error = None
+    while time.time() < deadline:
+        try:
+            return resolver.resolve(url)
+        except Exception as exc:
+            last_error = exc
+            time.sleep(0.5)
+    raise RuntimeError(f"could not connect to LibreOffice UNO: {last_error}")
+
+
+def update_document(doc, desktop, ctx):
+    try:
+        doc.updateLinks()
+    except Exception:
+        pass
+
+    for method_name in ("calculateAll", "updateAll"):
+        method = getattr(doc, method_name, None)
+        if method:
+            try:
+                method()
+            except Exception:
+                pass
+
+    try:
+        fields = doc.getTextFields().createEnumeration()
+        while fields.hasMoreElements():
+            try:
+                fields.nextElement().update()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    try:
+        indexes = doc.getDocumentIndexes()
+        for idx in range(indexes.getCount()):
+            indexes.getByIndex(idx).update()
+    except Exception:
+        pass
+
+    try:
+        frame = doc.getCurrentController().getFrame()
+        dispatcher = ctx.ServiceManager.createInstanceWithContext(
+            "com.sun.star.frame.DispatchHelper", ctx
+        )
+        for command in (".uno:SelectAll", ".uno:UpdateFields", ".uno:UpdateAllIndexes", ".uno:UpdateAll"):
+            try:
+                dispatcher.executeDispatch(frame, command, "", 0, ())
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def main():
+    if len(sys.argv) != 7:
+        print("usage: lo_update_fields.py INPUT.docx OUTPUT.docx|- OUTPUT.pdf|- PROFILE_DIR PORT SOFFICE", file=sys.stderr)
+        return 2
+
+    source, target_docx, target_pdf, profile_dir, port, soffice = sys.argv[1:]
+    profile = Path(profile_dir)
+    profile.mkdir(parents=True, exist_ok=True)
+
+    proc = subprocess.Popen(
+        [
+            soffice,
+            "--headless",
+            "--nologo",
+            "--nodefault",
+            "--nofirststartwizard",
+            "--nolockcheck",
+            f"-env:UserInstallation={profile.resolve().as_uri()}",
+            f"--accept=socket,host=127.0.0.1,port={port};urp;StarOffice.ComponentContext",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    doc = None
+    desktop = None
+    try:
+        ctx = connect(port)
+        desktop = ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", ctx)
+        doc = desktop.loadComponentFromURL(
+            file_url(source),
+            "_blank",
+            0,
+            (
+                prop("Hidden", True),
+                prop("ReadOnly", False),
+                prop("UpdateDocMode", 3),
+            ),
+        )
+        if doc is None:
+            raise RuntimeError("LibreOffice could not open source document")
+
+        update_document(doc, desktop, ctx)
+        if target_docx != "-":
+            doc.storeAsURL(
+                file_url(target_docx),
+                (
+                    prop("FilterName", "Office Open XML Text"),
+                    prop("Overwrite", True),
+                ),
+            )
+        if target_pdf != "-":
+            doc.storeToURL(
+                file_url(target_pdf),
+                (
+                    prop("FilterName", "writer_pdf_Export"),
+                    prop("Overwrite", True),
+                ),
+            )
+        return 0
+    finally:
+        if doc is not None:
+            try:
+                doc.close(True)
+            except Exception:
+                try:
+                    doc.dispose()
+                except Exception:
+                    pass
+        if desktop is not None:
+            try:
+                desktop.terminate()
+            except Exception:
+                pass
+        try:
+            proc.terminate()
+            proc.wait(timeout=10)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+]=]
+    local f = io.open(path, "w")
+    if not f then return false end
+    f:write(script)
+    f:close()
+    return true
+end
+
+local function finalize_with_libreoffice(path, config, log, opts)
+    local soffice = command_exists("libreoffice") or command_exists("soffice")
+    if not soffice then
+        log.warn("[ABNT-LO] LibreOffice not found; skipping LibreOffice finalization for %s", path)
+        return false
+    end
+    local python = find_uno_python()
+    if not python then
+        log.warn("[ABNT-LO] No Python executable with UNO support found; skipping LibreOffice finalization for %s", path)
+        return false
+    end
+
+    local temp_dir = make_temp_dir()
+    if not temp_dir then
+        log.warn("[ABNT-LO] Could not create temporary directory; skipping LibreOffice finalization for %s", path)
+        return false
+    end
+
+    local script_path = temp_dir .. "/lo_update_fields.py"
+    local profile_dir = temp_dir .. "/lo-profile"
+    local updated_docx_path = temp_dir .. "/updated.docx"
+    local target_docx = opts.update_docx and updated_docx_path or "-"
+    local target_pdf = opts.export_pdf and pdf_output_path(path, config) or "-"
+    local port = tostring(23000 + (os.time() % 20000))
+
+    if not write_field_update_script(script_path) then
+        remove_tree(temp_dir)
+        log.warn("[ABNT-LO] Could not write LibreOffice helper script; skipping %s", path)
+        return false
+    end
+
+    if target_pdf ~= "-" then
+        ensure_parent_dir(target_pdf)
+    end
+
+    local cmd = table.concat({
+        shell_quote(python),
+        shell_quote(script_path),
+        shell_quote(path),
+        shell_quote(target_docx),
+        shell_quote(target_pdf),
+        shell_quote(profile_dir),
+        shell_quote(port),
+        shell_quote(soffice),
+    }, " ")
+
+    local ok = os.execute(cmd)
+    local success = ok == true or ok == 0
+
+    if success and opts.update_docx then
+        if file_exists(updated_docx_path) and replace_file(updated_docx_path, path) then
+            log.info("[ABNT-FIELDS] Updated DOCX fields in place: %s", path)
+        else
+            success = false
+            log.warn("[ABNT-FIELDS] LibreOffice did not produce updated DOCX for %s", path)
+        end
+    end
+
+    if success and opts.export_pdf then
+        if file_exists(target_pdf) then
+            log.info("[ABNT-PDF] Generated LibreOffice PDF: %s", target_pdf)
+        else
+            success = false
+            log.warn("[ABNT-PDF] LibreOffice did not produce PDF for %s", path)
+        end
+    end
+
+    remove_tree(temp_dir)
+
+    if not success then
+        log.warn("[ABNT-LO] LibreOffice finalization failed for %s", path)
+    end
+    return success
+end
+
 ---Finalize batch of DOCX files.
 ---This is called by the emitter after all Pandoc processes complete.
 ---@param paths table Array of DOCX file paths
@@ -1320,6 +1712,18 @@ function M.finalize(paths, config, log)
         local ok, err = pcall(M.run, path, config, log)
         if not ok then
             log.warn("[ABNT-DOCX] Postprocess failed for %s: %s", path, tostring(err))
+        else
+            local update_docx = field_update_enabled(config)
+            local export_pdf = pdf_export_enabled(config)
+            if update_docx or export_pdf then
+                local lo_ok, lo_err = pcall(finalize_with_libreoffice, path, config, log, {
+                    update_docx = update_docx,
+                    export_pdf = export_pdf,
+                })
+                if not lo_ok then
+                    log.warn("[ABNT-LO] LibreOffice finalization failed for %s: %s", path, tostring(lo_err))
+                end
+            end
         end
     end
 end

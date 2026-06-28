@@ -207,6 +207,7 @@ return {
             spacing = { before = 6, after = 12, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
+            keep_lines = true,
         },
 
         -- Figure Source
@@ -218,6 +219,7 @@ return {
             spacing = { before = 6, after = 12, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
+            keep_lines = true,
         },
 
         -- Table Source
@@ -229,6 +231,7 @@ return {
             spacing = { before = 6, after = 12, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
+            keep_lines = true,
         },
 
         -- Footnote Text
@@ -473,6 +476,16 @@ return {
         },
 
         {
+            id = "CoverImageVerticalOrg",
+            name = "Cover Image Vertical Organization",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 15, bold = true, all_caps = true, color = "0E4565" },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "center",
+        },
+
+        {
             id = "CoverImageAuthor",
             name = "Cover Image Author",
             based_on = "Normal",
@@ -480,6 +493,40 @@ return {
             spacing = { before = 0, after = 0, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "left",
+        },
+
+        {
+            id = "CoverImageNature",
+            name = "Cover Image Nature",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 9, color = "0E4565" },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "left",
+        },
+
+        {
+            id = "CoverImageAdvisor",
+            name = "Cover Image Advisor",
+            based_on = "CoverImageNature",
+            font = { name = "Times New Roman", size = 8, color = "C7D0C8" },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "left",
+        },
+
+        {
+            id = "CoverImageLocation",
+            name = "Cover Image Location",
+            based_on = "CoverLocation",
+            font = { name = "Times New Roman", size = 10, color = "C7D0C8" },
+        },
+
+        {
+            id = "CoverImageYear",
+            name = "Cover Image Year",
+            based_on = "CoverImageLocation",
+            font = { name = "Times New Roman", size = 10, color = "C7D0C8" },
         },
 
         {
