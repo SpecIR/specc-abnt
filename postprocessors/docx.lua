@@ -114,6 +114,10 @@ local ABNT_TABLE_CONFIG = {
         insideH = { style = "nil" },
         insideV = { style = "nil" },
     },
+    -- Word's default side cell margins (108dxa) break narrow headers like "CSCI"
+    -- mid-word; tighten them toward LaTeX's \tabcolsep and add a little vertical
+    -- padding so rows breathe closer to the abntex/uspsc PDF.
+    cell_margins = { top = "90", bottom = "90", left = "40", right = "40" },
     paragraph = { zero_indent = true },
     header = {
         remove_shading = true,
@@ -588,7 +592,11 @@ end
 -- Code Block Styling
 -- ============================================================================
 
----Fix code block styles (VerbatimChar, SourceCode).
+---Fix the SourceCode style so code blocks render flush-left.
+---VerbatimChar/SourceCode existence is guaranteed by the default postprocessor's
+---base process_styles (which runs first); here we only patch the SourceCode
+---paragraph properties: left alignment and no first-line indent (SourceCode may
+---be basedOn Normal, whose ABNT first-line indent would shift code blocks).
 ---@param styles_content string styles.xml content
 ---@param log table Logger instance
 ---@return string Modified content
@@ -599,128 +607,29 @@ function M.fix_code_styles(styles_content, log)
         return styles_content
     end
 
-    local styles_root = doc.root
-
-    -- Helper to find style by styleId
-    local function find_style_by_id(style_id)
-        local all_styles = xml.find_children(styles_root, "w:style")
-        for _, style in ipairs(all_styles) do
-            if xml.get_attr(style, "w:styleId") == style_id then
-                return style
-            end
-        end
-        return nil
-    end
-
-    -- Check/add VerbatimChar style
-    if not find_style_by_id("VerbatimChar") then
-        local verbatim_style = xml.node("w:style", {
-            ["w:type"] = "character",
-            ["w:styleId"] = "VerbatimChar"
-        }, {
-            xml.node("w:name", {["w:val"] = "Verbatim Char"}),
-            xml.node("w:basedOn", {["w:val"] = "DefaultParagraphFont"}),
-            xml.node("w:rPr", {}, {
-                xml.node("w:rFonts", {
-                    ["w:ascii"] = "Courier New",
-                    ["w:hAnsi"] = "Courier New"
-                }),
-                xml.node("w:sz", {["w:val"] = "18"}),
-                xml.node("w:szCs", {["w:val"] = "18"})
-            })
-        })
-        xml.add_child(styles_root, verbatim_style)
-        log.debug('[ABNT-STYLES] Injected VerbatimChar style')
-    end
-
-    -- Check/add SourceCode style
-    local source_code = find_style_by_id("SourceCode")
-    if source_code then
-        -- Style exists - ensure pPr has correct properties
-        local pPr = xml.find_child(source_code, "w:pPr")
-        if pPr then
-            if not xml.find_child(pPr, "w:jc") then
-                xml.add_child(pPr, xml.node("w:jc", {["w:val"] = "left"}))
-            end
-            local ind = xml.find_child(pPr, "w:ind")
-            if ind then
-                xml.set_attr(ind, "w:firstLine", "0")
-            else
-                xml.add_child(pPr, xml.node("w:ind", {["w:firstLine"] = "0"}))
-            end
-            log.debug('[ABNT-STYLES] Fixed SourceCode alignment')
-        end
-    else
-        -- Style doesn't exist - create full definition
-        local source_code_style = xml.node("w:style", {
-            ["w:type"] = "paragraph",
-            ["w:styleId"] = "SourceCode"
-        }, {
-            xml.node("w:name", {["w:val"] = "Source Code"}),
-            xml.node("w:basedOn", {["w:val"] = "Normal"}),
-            xml.node("w:pPr", {}, {
-                xml.node("w:jc", {["w:val"] = "left"}),
-                xml.node("w:spacing", {
-                    ["w:before"] = "120",
-                    ["w:after"] = "120",
-                    ["w:line"] = "240",
-                    ["w:lineRule"] = "auto"
-                }),
-                xml.node("w:ind", {["w:firstLine"] = "0"})
-            }),
-            xml.node("w:rPr", {}, {
-                xml.node("w:rFonts", {
-                    ["w:ascii"] = "Courier New",
-                    ["w:hAnsi"] = "Courier New"
-                }),
-                xml.node("w:sz", {["w:val"] = "18"}),
-                xml.node("w:szCs", {["w:val"] = "18"})
-            })
-        })
-        xml.add_child(styles_root, source_code_style)
-        log.debug('[ABNT-STYLES] Injected SourceCode style')
-    end
-
-    return xml.serialize(doc)
-end
-
----Remove duplicate style definitions from styles.xml.
----Pandoc may inject a second definition of a custom style (e.g., Heading1)
----after the correct one from the reference-doc template. MS Word uses the
----last definition, which breaks formatting. This function keeps the first
----definition and removes any subsequent duplicates.
----@param content string styles.xml content
----@param log table Logger instance
----@return string Modified content
-function M.remove_duplicate_custom_styles(content, log)
-    local doc = xml.parse(content)
-    if not doc or not doc.root then
-        return content
-    end
-
-    local styles_root = doc.root
-    if styles_root.name ~= "w:styles" then
-        styles_root = xml.find_child(doc.root, "w:styles") or doc.root
-    end
-
-    local all_styles = xml.find_children(styles_root, "w:style")
-    local seen = {}
-    local removed = 0
-
-    for _, style in ipairs(all_styles) do
-        local style_id = xml.get_attr(style, "w:styleId")
-        if style_id then
-            if seen[style_id] then
-                xml.remove_child(styles_root, style)
-                removed = removed + 1
-            else
-                seen[style_id] = true
-            end
+    local source_code
+    for _, style in ipairs(xml.find_children(doc.root, "w:style")) do
+        if xml.get_attr(style, "w:styleId") == "SourceCode" then
+            source_code = style
+            break
         end
     end
+    if not source_code then
+        return styles_content
+    end
 
-    if removed > 0 then
-        log.debug('[ABNT-STYLES] Removed %d duplicate style definition(s)', removed)
+    local pPr = xml.find_child(source_code, "w:pPr")
+    if pPr then
+        if not xml.find_child(pPr, "w:jc") then
+            xml.add_child(pPr, xml.node("w:jc", {["w:val"] = "left"}))
+        end
+        local ind = xml.find_child(pPr, "w:ind")
+        if ind then
+            xml.set_attr(ind, "w:firstLine", "0")
+        else
+            xml.add_child(pPr, xml.node("w:ind", {["w:firstLine"] = "0"}))
+        end
+        log.debug('[ABNT-STYLES] Fixed SourceCode alignment')
     end
 
     return xml.serialize(doc)
@@ -1292,9 +1201,9 @@ end
 ---@param _config table|nil Configuration (unused, interface contract)
 ---@return string Modified content
 function M.process_styles(content, log, _config)
-    -- Remove duplicate style definitions injected by Pandoc
-    content = M.remove_duplicate_custom_styles(content, log)
-    -- Fix code block styles
+    -- Duplicate-style removal and code-style injection already ran in the
+    -- default postprocessor's base process_styles; only ABNT-specific
+    -- SourceCode paragraph fixes remain here.
     content = M.fix_code_styles(content, log)
 
     return content
@@ -1348,10 +1257,10 @@ end
 ---@return boolean Success status
 function M.run(path, config, log)
     local template = config.template or "abnt"
-    -- For ABNT, we use the default DOCX postprocessor which loads this module
-    -- as a template-specific handler
+    -- Drive the default DOCX postprocessor with this module as the hook
+    -- provider, instead of having it re-require us by template name
     local default_pp = require("models.default.postprocessors.docx")
-    return default_pp.postprocess(path, template, log, config)
+    return default_pp.postprocess(path, template, log, config, M)
 end
 
 local function truthy(value)
