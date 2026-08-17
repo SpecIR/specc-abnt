@@ -46,11 +46,16 @@ function M.float_list_ooxml(data, spec_id, counter_group, caption_prefix, empty_
     for _, row in ipairs(rows or {}) do
         local anchor = float_anchor.ref_anchor(row) or ""
         local title = row.caption or anchor
-        local text = string.format("%s %s - %s", caption_prefix, row.number or "", title)
+        local text = string.format("%s %s – %s", caption_prefix, row.number or "", title)
         table.insert(parts, OOXMLBuilder.static.pageref_entry({
             anchor = anchor,
             text = text,
-            style = "TOC1",
+            -- LOF/LOT entries are not level-1 TOC headings.  Keeping them on
+            -- TOC1 made them inherit bold text, 12pt before-spacing and the
+            -- Normal style's 1.3cm first-line indent.  The dedicated style
+            -- keeps the first line at the margin and indents only wrapped
+            -- continuation lines, like abntex2's listoffigures/listoftables.
+            style = "FloatListEntry",
         }))
     end
 

@@ -5,7 +5,7 @@
 --- - NBR 14724/2011 - 5.1: Margins (left 3cm, right 2cm, top 3cm, bottom 2cm)
 --- - NBR 14724/2011 - 5.2: Line spacing 1.5
 --- - NBR 6027:2012: Table of contents formatting
---- - Heading font: Sans-serif (Arial)
+--- - Body and heading font: Times New Roman (official USP 2024 template)
 --- - Body font: Serif (Times New Roman, 12pt)
 --- - Caption separator: Em-dash (-)
 --- - Footnotes: 10pt
@@ -44,25 +44,25 @@ return {
     -- ========================================================================
     paragraph_styles = {
         -- Normal body text
-        -- abntex2: \parindent=1.3cm
+        -- USP 2024 template: 709dxa = 1.25cm first-line indent
         {
             id = "Normal",
             name = "Normal",
             font = { name = "Times New Roman", size = 12 },
             spacing = { line = 1.5, after = 0 },
-            indent = { first_line = "1.3cm" },
+            indent = { first_line = "1.25cm" },
             alignment = "justified",
             widow_control = true,
         },
 
         -- Heading 1: CHAPTER TITLE (all caps, bold)
-        -- abntex2: \chapter uses \ABNTEXchapterfont (Arial/Helvetica Bold, ~14pt)
+        -- USP 2024 template: Times New Roman 12pt, bold, uppercase
         {
             id = "Heading1",
             name = "Heading 1",
             based_on = "Normal",
             next = "FirstParagraph",
-            font = { name = "Arial", size = 14, bold = true, all_caps = true },
+            font = { name = "Times New Roman", size = 12, bold = true, all_caps = true },
             spacing = { before = 0, after = 18, line = 1.0 },
             indent = { first_line = "0cm" },
             keep_next = true,
@@ -78,7 +78,7 @@ return {
             name = "Heading 2",
             based_on = "Normal",
             next = "FirstParagraph",
-            font = { name = "Arial", size = 12, bold = true },
+            font = { name = "Times New Roman", size = 12, bold = true },
             spacing = { before = 12, after = 6, line = 1.0 },
             indent = { first_line = "0cm" },
             keep_next = true,
@@ -87,13 +87,13 @@ return {
             widow_control = true,
         },
 
-        -- Heading 3: Subsection title (bold + italic)
+        -- Heading 3: subsection title (regular in the USP 2024 template)
         {
             id = "Heading3",
             name = "Heading 3",
             based_on = "Normal",
             next = "FirstParagraph",
-            font = { name = "Arial", size = 12, bold = true, italic = true },
+            font = { name = "Times New Roman", size = 12 },
             spacing = { before = 12, after = 6, line = 1.0 },
             indent = { first_line = "0cm" },
             keep_next = true,
@@ -102,13 +102,13 @@ return {
             widow_control = true,
         },
 
-        -- Heading 4: Sub-subsection (italic only)
+        -- Heading 4: deeper subsection, regular
         {
             id = "Heading4",
             name = "Heading 4",
             based_on = "Normal",
             next = "FirstParagraph",
-            font = { name = "Arial", size = 12, italic = true },
+            font = { name = "Times New Roman", size = 12 },
             spacing = { before = 12, after = 6, line = 1.0 },
             indent = { first_line = "0cm" },
             keep_next = true,
@@ -123,7 +123,7 @@ return {
             name = "Heading 5",
             based_on = "Normal",
             next = "FirstParagraph",
-            font = { name = "Arial", size = 12 },
+            font = { name = "Times New Roman", size = 12 },
             spacing = { before = 12, after = 6, line = 1.0 },
             indent = { first_line = "0cm" },
             keep_next = true,
@@ -138,7 +138,7 @@ return {
             name = "Title",
             based_on = "Normal",
             next = "Normal",
-            font = { name = "Arial", size = 14, bold = true, all_caps = true },
+            font = { name = "Times New Roman", size = 14, bold = true, all_caps = true },
             spacing = { before = 0, after = 24, line = 1.5 },
             indent = { first_line = "0cm" },
             alignment = "center",
@@ -151,21 +151,21 @@ return {
             name = "Subtitle",
             based_on = "Normal",
             next = "Normal",
-            font = { name = "Arial", size = 12 },
+            font = { name = "Times New Roman", size = 12 },
             spacing = { before = 0, after = 24, line = 1.5 },
             indent = { first_line = "0cm" },
             alignment = "center",
             widow_control = true,
         },
 
-        -- Caption (general - used for floats)
-        -- ABNT: Caption centered, 10pt, with spacing
+        -- Caption (general - used for floats). The USP 2024 template uses
+        -- centered Times New Roman 12pt with single line spacing.
         {
             id = "Caption",
             name = "Caption",
             based_on = "Normal",
-            font = { name = "Times New Roman", size = 10 },
-            spacing = { before = 12, after = 6, line = 1.0 },
+            font = { name = "Times New Roman", size = 12 },
+            spacing = { before = 0, after = 0, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
             keep_next = true,
@@ -176,8 +176,8 @@ return {
             id = "TableCaption",
             name = "Table Caption",
             based_on = "Normal",
-            font = { name = "Times New Roman", size = 10 },
-            spacing = { before = 12, after = 6, line = 1.0 },
+            font = { name = "Times New Roman", size = 12 },
+            spacing = { before = 0, after = 0, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
             keep_next = true,
@@ -189,8 +189,8 @@ return {
             id = "ImageCaption",
             name = "Image Caption",
             based_on = "Caption",
-            font = { name = "Times New Roman", size = 10 },
-            spacing = { before = 12, after = 6, line = 1.0 },
+            font = { name = "Times New Roman", size = 12 },
+            spacing = { before = 0, after = 0, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
             keep_next = true,
@@ -203,8 +203,10 @@ return {
             id = "Source",
             name = "Source",
             based_on = "Caption",
-            font = { name = "Times New Roman", size = 10 },
-            spacing = { before = 6, after = 12, line = 1.0 },
+            font = { name = "Times New Roman", size = 12 },
+            -- Separate the float block from the paragraph or heading that
+            -- follows it. The source itself remains single-spaced.
+            spacing = { before = 0, after = 12, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
             keep_lines = true,
@@ -215,8 +217,8 @@ return {
             id = "FigureSource",
             name = "Figure Source",
             based_on = "Normal",
-            font = { name = "Times New Roman", size = 10 },
-            spacing = { before = 6, after = 12, line = 1.0 },
+            font = { name = "Times New Roman", size = 12 },
+            spacing = { before = 0, after = 12, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
             keep_lines = true,
@@ -227,8 +229,8 @@ return {
             id = "TableSource",
             name = "Table Source",
             based_on = "Normal",
-            font = { name = "Times New Roman", size = 10 },
-            spacing = { before = 6, after = 12, line = 1.0 },
+            font = { name = "Times New Roman", size = 12 },
+            spacing = { before = 0, after = 12, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
             keep_lines = true,
@@ -241,6 +243,17 @@ return {
             font = { name = "Times New Roman", size = 10 },
             spacing = { line = 1.0, after = 0 },
             alignment = "justified",
+        },
+
+        -- Page number in the official template: Arial 10pt, right aligned.
+        {
+            id = "Header",
+            name = "Header",
+            based_on = "Normal",
+            font = { name = "Arial", size = 10 },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "right",
         },
 
         -- Block Quote (citacao longa - >3 lines)
@@ -266,14 +279,16 @@ return {
         },
 
         -- TOC styles
-        -- TOC heading should match pre-textual unnumbered headings (abntex2 \chapter*)
+        -- TOC heading matches the centered 12pt bold title in the USP template.
         {
             id = "TOCHeading",
             name = "TOC Heading",
             based_on = "Normal",
             next = "Normal",
-            font = { name = "Arial", size = 18, bold = false, all_caps = true },
-            spacing = { before = 0, after = 24, line = 1.0 },
+            font = { name = "Times New Roman", size = 12, bold = true, all_caps = true },
+            -- The Word template uses a blank 1.5-spaced paragraph after the
+            -- title. Generated documents express that separation in-style.
+            spacing = { before = 0, after = 18, line = 1.0 },
             alignment = "center",
             keep_next = true,
             keep_lines = true,
@@ -285,7 +300,7 @@ return {
             based_on = "Normal",
             next = "Normal",
             font = { name = "Times New Roman", size = 12, bold = true },
-            spacing = { before = 12, after = 0, line = 1.5 },
+            spacing = { before = 0, after = 0, line = 1.5 },
         },
 
         {
@@ -293,9 +308,9 @@ return {
             name = "TOC 2",
             based_on = "Normal",
             next = "Normal",
-            font = { name = "Times New Roman", size = 12 },
+            font = { name = "Times New Roman", size = 12, bold = true },
             spacing = { before = 0, after = 0, line = 1.5 },
-            indent = { left = "0.5cm" },
+            indent = { left = "0cm" },
         },
 
         {
@@ -305,7 +320,21 @@ return {
             next = "Normal",
             font = { name = "Times New Roman", size = 12 },
             spacing = { before = 0, after = 0, line = 1.5 },
-            indent = { left = "1cm" },
+            indent = { left = "0cm" },
+        },
+
+        -- List of figures/tables entry.  A hanging indent keeps the first
+        -- line flush with the text margin while aligning wrapped caption
+        -- lines after the "Figura/Tabela N –" label.  Do not base these
+        -- entries on TOC1: that style is bold and has heading-like spacing.
+        {
+            id = "FloatListEntry",
+            name = "Float List Entry",
+            based_on = "Normal",
+            next = "FloatListEntry",
+            font = { name = "Times New Roman", size = 12 },
+            spacing = { before = 0, after = 0, line = 1.5 },
+            indent = { left = "2.3cm", hanging = "2.3cm" },
         },
 
         -- Body Text
@@ -315,20 +344,20 @@ return {
             based_on = "Normal",
             font = { name = "Times New Roman", size = 12 },
             spacing = { line = 1.5, after = 0 },  -- Changed from 12 to 0 to match Normal/LaTeX
-            indent = { first_line = "1.3cm" },
+            indent = { first_line = "1.25cm" },
             alignment = "justified",
             widow_control = true,
         },
 
-        -- First Paragraph (no indent, with space before for separation from floats)
+        -- The USP template indents the first body paragraph after a heading too.
         {
             id = "FirstParagraph",
             name = "First Paragraph",
             based_on = "Normal",
             next = "Normal",
             font = { name = "Times New Roman", size = 12 },
-            spacing = { before = 6, line = 1.5, after = 0 },  -- 6pt before for separation
-            indent = { first_line = "0cm" },
+            spacing = { before = 0, line = 1.5, after = 0 },
+            indent = { first_line = "1.25cm" },
             alignment = "justified",
             widow_control = true,
         },
@@ -365,23 +394,24 @@ return {
         -- ABNT Section Type Styles (NBR 14724:2011)
         -- ====================================================================
 
-        -- Unnumbered Heading - for pre/post-textual elements
-        -- abntex2 uses \chapter* which renders as ~18pt, not bold, centered
+        -- Unnumbered Heading - for pre/post-textual elements. The official
+        -- template centers these titles in Times New Roman 12pt bold.
         {
             id = "UnnumberedHeading",
             name = "Unnumbered Heading",
             based_on = "Normal",  -- NOT Heading1 to avoid numbering inheritance
             next = "FirstParagraph",
             font = {
-                name = "Arial",
-                size = 18,        -- Match abntex2 \chapter* size (~\LARGE)
-                bold = false,     -- abntex2 uses regular weight for chapter*
+                name = "Times New Roman",
+                size = 12,
+                bold = true,
             },
             caps = true,  -- ALL CAPS
             alignment = "center",
             spacing = {
                 before = 0,
-                after = 24,       -- More space after heading (match abntex2)
+                -- Equivalent to the template's blank 1.5-spaced paragraph.
+                after = 18,
                 line = 1.0,       -- Single spacing
             },
             outline_level = 1,  -- Required for TOC inclusion
@@ -655,7 +685,7 @@ return {
             name = "Book Part",
             based_on = "Normal",
             next = "Normal",
-            font = { name = "Arial", size = 18, bold = true, all_caps = true },
+            font = { name = "Times New Roman", size = 12, bold = true, all_caps = true },
             spacing = { before = 0, after = 24, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
@@ -664,14 +694,14 @@ return {
             page_break_before = true,
         },
 
-        -- Abstract body style - single spacing per ABNT NBR 6028:2003
+        -- Abstract body style. The supplied USP template uses 1.5 spacing.
         {
             id = "Abstract",
             name = "Abstract",
             based_on = "Normal",
             font = { name = "Times New Roman", size = 12 },
             lang = "en-US",
-            spacing = { line = 1.0, after = 12 },
+            spacing = { line = 1.5, after = 0 },
             indent = { first_line = "0cm" },
             alignment = "justified",
         },
@@ -683,7 +713,7 @@ return {
             based_on = "Normal",
             font = { name = "Times New Roman", size = 12 },
             lang = "pt-BR",
-            spacing = { line = 1.0, after = 12 },
+            spacing = { line = 1.5, after = 0 },
             indent = { first_line = "0cm" },
             alignment = "justified",
         },
@@ -728,7 +758,7 @@ return {
             name = "Appendix Heading",
             based_on = "Heading1",
             next = "FirstParagraph",
-            font = { name = "Arial", size = 14, bold = true, all_caps = true },
+            font = { name = "Times New Roman", size = 12, bold = true, all_caps = true },
             spacing = { before = 0, after = 18, line = 1.0 },
             indent = { first_line = "0cm" },
             alignment = "center",
@@ -744,7 +774,7 @@ return {
             name = "Annex Heading",
             based_on = "AppendixHeading",
             next = "FirstParagraph",
-            font = { name = "Arial", size = 14, bold = true, all_caps = true },
+            font = { name = "Times New Roman", size = 12, bold = true, all_caps = true },
         },
 
         -- Index style
@@ -847,13 +877,13 @@ return {
         figure = {
             template = "{prefix} {number} {separator} {title}",
             prefix = "Figura",
-            separator = "-",  -- Em-dash
+            separator = "–",
             style = "Caption",
         },
         table = {
             template = "{prefix} {number} {separator} {title}",
             prefix = "Tabela",
-            separator = "-",
+            separator = "–",
             style = "Caption",
         },
         listing = {
@@ -883,7 +913,7 @@ return {
         figure = {
             template = "{prefix} {number} {separator} {title}",
             prefix = "Figura",
-            separator = "-",
+            separator = "–",
             style = "ImageCaption",
             chapter_numbering = true,
             chapter_separator = "-",
@@ -896,7 +926,7 @@ return {
         table = {
             template = "{prefix} {number} {separator} {title}",
             prefix = "Tabela",
-            separator = "-",
+            separator = "–",
             style = "TableCaption",
             chapter_numbering = true,
             chapter_separator = "-",

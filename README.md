@@ -16,13 +16,22 @@ cd specc-abnt
 bash scripts/docker_install.sh
 ```
 
-For builds that update DOCX fields with LibreOffice (Word's **Ctrl+A**, **F9**
-equivalent) or export a PDF after that update pass, install the larger image
-variant:
+The image includes LibreOffice and Python UNO, so builds can update DOCX
+fields (Word's **Ctrl+A**, **F9** equivalent) and export a PDF after that
+update pass out of the box — there is no separate LibreOffice image variant.
+
+## Local image republish
+
+To update the published container without changing CI, repack the existing GHCR
+image with the ABNT model from this checkout:
 
 ```bash
-bash scripts/docker_install.sh --with-libreoffice
+bash scripts/repack_published_image.sh --push
 ```
+
+The script pulls `ghcr.io/specir/specc-abnt:latest`, overwrites
+`/opt/speccompiler/models/abnt` inside the image, rebuilds the image locally,
+and pushes it only when `--push` is set.
 
 ## Usage
 
@@ -46,7 +55,7 @@ This repository doubles as a template for writing your own ABNT document with au
 
 1. Fork it (or "Use this template" on GitHub).
 2. Write your document in a directory containing a `project.yaml` (the example in `examples/` is the default).
-3. Push to `main` — the [Publish Document workflow](.github/workflows/publish-document.yml) builds the DOCX/PDF with the ready-made `ghcr.io/specir/specc-abnt:libreoffice` image (no Docker build in your fork), attaches them to a GitHub release, and publishes the PDF to GitHub Pages.
+3. Push to `main` — the [Publish Document workflow](.github/workflows/publish-document.yml) builds the DOCX/PDF with the ready-made `ghcr.io/specir/specc-abnt:latest` image (no Docker build in your fork), attaches them to a GitHub release, and publishes the PDF to GitHub Pages.
 
 To point the workflow at your own document, edit `PROJECT_DIR` at the top of `.github/workflows/publish-document.yml`.
 
@@ -68,12 +77,11 @@ This populates the Sumário and the lists and renumbers the figures, tables, and
 sections. (In LibreOffice Writer the equivalent is **Tools ▸ Update ▸ Update
 All**.)
 
-If `docx.update_fields: true` is set, the ABNT postprocessor opens the DOCX in
+If `docx.update_fields: true` is set, the postprocessor opens the DOCX in
 LibreOffice, updates fields/indexes, and saves the same DOCX path in place. If
 `docx.export_pdf: true` is also set, it writes a PDF next to the DOCX after the
-update pass. On the default slim image these options are skipped with a warning;
-use the `--with-libreoffice` installer variant or the
-`ghcr.io/specir/specc-abnt:libreoffice` image.
+update pass. LibreOffice ships in the image; on native installs without
+LibreOffice/UNO these options are skipped with a warning.
 
 ## Output formats
 

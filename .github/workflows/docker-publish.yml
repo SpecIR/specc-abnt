@@ -11,12 +11,14 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   BASE_IMAGE: ghcr.io/specir/speccompiler:latest
   TEST_IMAGE: specc-abnt:test
-  TEST_LO_IMAGE: specc-abnt:libreoffice-test
 
 jobs:
   # ---------------------------------------------------------------------------
   # Pull requests build and test the image locally.
   # Merges to main build, test, and then publish to GHCR.
+  # The base image ships LibreOffice/UNO, so there is a single image; the
+  # legacy :libreoffice tag is still published as an alias of :latest so
+  # existing forks' publish-document workflows keep working.
   # ---------------------------------------------------------------------------
   build-and-publish:
     runs-on: ubuntu-latest
@@ -40,16 +42,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=sha-
-
-      - name: Extract LibreOffice metadata
-        id: meta-lo
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
             type=raw,value=libreoffice,enable={{is_default_branch}}
-            type=sha,prefix=libreoffice-sha-
+            type=sha,prefix=sha-
 
       - name: Build image for tests
         uses: docker/build-push-action@v6
@@ -61,11 +55,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
-            INSTALL_LIBREOFFICE=false
-          cache-from: type=gha,scope=abnt-model-slim
-          cache-to: type=gha,mode=max,scope=abnt-model-slim
+          cache-from: type=gha,scope=abnt-model
+          cache-to: type=gha,mode=max,scope=abnt-model
 
-      - name: Smoke test
+      - name: Smoke test (build + LibreOffice field update + PDF export)
         run: |
           docker run --rm \
             --user "$(id -u):$(id -g)" \
@@ -75,6 +68,8 @@ jobs:
             build examples/project.yaml
 
           test -f examples/build/monografia.docx
+          test -f examples/build/monografia.pdf
+          unzip -t examples/build/monografia.docx
 
       - name: Run model tests
         run: |
@@ -83,35 +78,6 @@ jobs:
             --entrypoint bash \
             "${TEST_IMAGE}" \
             /opt/speccompiler/tests/run.sh abnt-tests
-
-      - name: Build LibreOffice image for tests
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: false
-          load: true
-          tags: ${{ env.TEST_LO_IMAGE }}
-          labels: ${{ steps.meta-lo.outputs.labels }}
-          build-args: |
-            BASE_IMAGE=${{ env.BASE_IMAGE }}
-            INSTALL_LIBREOFFICE=true
-          cache-from: type=gha,scope=abnt-model-libreoffice
-          cache-to: type=gha,mode=max,scope=abnt-model-libreoffice
-
-      - name: Smoke test LibreOffice field update
-        run: |
-          rm -f examples/build/monografia.docx examples/build/monografia.pdf
-
-          docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -v "${{ github.workspace }}:/workspace" \
-            -w /workspace \
-            "${TEST_LO_IMAGE}" \
-            build examples/project.yaml
-
-          test -f examples/build/monografia.docx
-          test -f examples/build/monografia.pdf
-          unzip -t examples/build/monografia.docx
 
       - name: Log in to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -131,23 +97,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             BASE_IMAGE=${{ env.BASE_IMAGE }}
-            INSTALL_LIBREOFFICE=false
-          cache-from: type=gha,scope=abnt-model-slim
-          cache-to: type=gha,mode=max,scope=abnt-model-slim
-
-      - name: Publish LibreOffice image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta-lo.outputs.tags }}
-          labels: ${{ steps.meta-lo.outputs.labels }}
-          build-args: |
-            BASE_IMAGE=${{ env.BASE_IMAGE }}
-            INSTALL_LIBREOFFICE=true
-          cache-from: type=gha,scope=abnt-model-libreoffice
-          cache-to: type=gha,mode=max,scope=abnt-model-libreoffice
+          cache-from: type=gha,scope=abnt-model
+          cache-to: type=gha,mode=max,scope=abnt-model
 
       - name: Make package public
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

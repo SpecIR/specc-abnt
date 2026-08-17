@@ -19,6 +19,10 @@ return function(actual_doc, helpers)
     local pageref_anchors = {}
     local bookmark_names = {}
     local empty_pagerefs = 0
+    local float_list_entries = 0
+    local legacy_toc1_entries = 0
+    local hyphen_separators = 0
+    local en_dash_separators = 0
 
     actual_doc:walk({
         RawBlock = function(rb)
@@ -32,6 +36,24 @@ return function(actual_doc, helpers)
                     if anchor == "" or anchor == '""' then
                         empty_pagerefs = empty_pagerefs + 1
                     end
+                end
+                for _ in text:gmatch('<w:pStyle w:val="FloatListEntry"') do
+                    float_list_entries = float_list_entries + 1
+                end
+                for _ in text:gmatch('<w:pStyle w:val="TOC1"') do
+                    legacy_toc1_entries = legacy_toc1_entries + 1
+                end
+                for _ in text:gmatch('Figura%s+%d+%s+%-%s+') do
+                    hyphen_separators = hyphen_separators + 1
+                end
+                for _ in text:gmatch('Tabela%s+%d+%s+%-%s+') do
+                    hyphen_separators = hyphen_separators + 1
+                end
+                for _ in text:gmatch('Figura%s+%d+%s+–%s+') do
+                    en_dash_separators = en_dash_separators + 1
+                end
+                for _ in text:gmatch('Tabela%s+%d+%s+–%s+') do
+                    en_dash_separators = en_dash_separators + 1
                 end
             end
 
@@ -65,7 +87,26 @@ return function(actual_doc, helpers)
             #pageref_anchors - empty_pagerefs))
     end
 
-    -- 4. Every PAGEREF anchor must have a matching bookmark in the document
+    -- 4. LOF/LOT use their own non-indented, non-bold paragraph style.  TOC1
+    -- inherits heading formatting and Normal's first-line indent in ABNT.
+    if float_list_entries ~= #pageref_anchors then
+        err(string.format(
+            "Expected every PAGEREF entry to use FloatListEntry, got %d of %d",
+            float_list_entries, #pageref_anchors))
+    end
+    if legacy_toc1_entries > 0 then
+        err(string.format("Found %d LOF/LOT entries still using TOC1", legacy_toc1_entries))
+    end
+    if hyphen_separators > 0 then
+        err(string.format("Found %d LOF/LOT labels using hyphen instead of en dash", hyphen_separators))
+    end
+    if en_dash_separators ~= #pageref_anchors then
+        err(string.format(
+            "Expected every LOF/LOT label to use an en dash, got %d of %d",
+            en_dash_separators, #pageref_anchors))
+    end
+
+    -- 5. Every PAGEREF anchor must have a matching bookmark in the document
     -- This catches the real bug: LOF/LOT references point to anchors that
     -- don't exist as bookmarks, causing "Error: Reference source not found"
     local missing_bookmarks = {}
@@ -82,7 +123,7 @@ return function(actual_doc, helpers)
         ))
     end
 
-    -- 5. Verify float captions appear in the document text
+    -- 6. Verify float captions appear in the document text
     local text = pandoc.utils.stringify(actual_doc)
     local expected_captions = {
         "Imagem de teste para LOF",

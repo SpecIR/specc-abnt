@@ -114,10 +114,10 @@ local ABNT_TABLE_CONFIG = {
         insideH = { style = "nil" },
         insideV = { style = "nil" },
     },
-    -- Word's default side cell margins (108dxa) break narrow headers like "CSCI"
-    -- mid-word; tighten them toward LaTeX's \tabcolsep and add a little vertical
-    -- padding so rows breathe closer to the abntex/uspsc PDF.
-    cell_margins = { top = "90", bottom = "90", left = "40", right = "40" },
+    -- Keep the IBGE open-table look while giving adjacent columns enough
+    -- breathing room in DOCX. The left/right margins combine across a column
+    -- boundary, so 108dxa gives a visible gap without drawing vertical rules.
+    cell_margins = { top = "90", bottom = "90", left = "108", right = "108" },
     paragraph = { zero_indent = true },
     header = {
         remove_shading = true,
@@ -162,6 +162,31 @@ local function get_table_para_style(p)
     return nil
 end
 
+---Set readable paragraph layout inside an ABNT data table.
+---Body text in the ABNT template is justified, but table cells become hard to
+---read when short wrapped lines stretch across a narrow column. Tables keep
+---their own alignment from Pandoc where present; otherwise force left alignment.
+---@param tbl table Table DOM node
+local function make_table_text_readable(tbl)
+    for _, p in ipairs(xml.find_by_name(tbl, "w:p")) do
+        local pPr = xml.find_child(p, "w:pPr")
+        if not pPr then
+            pPr = xml.node("w:pPr")
+            xml.insert_child(p, pPr, 1)
+        end
+
+        local jc = xml.find_child(pPr, "w:jc")
+        if jc then
+            local val = xml.get_attr(jc, "w:val")
+            if val == "both" or val == "distribute" or val == "justify" then
+                xml.set_attr(jc, "w:val", "left")
+            end
+        else
+            xml.add_child(pPr, xml.node("w:jc", {["w:val"] = "left"}))
+        end
+    end
+end
+
 ---Apply ABNT table formatting by detecting tables after caption paragraphs.
 ---Per ABNT NBR 14724:2011:
 ---  - Tables after TableCaption: IBGE three-line style (open borders)
@@ -202,6 +227,7 @@ function M.fix_tables(content, log)
                 if prev_was_table_caption then
                     -- This is a data table - apply IBGE style via shared lib
                     table_formatter.format_table_node(node, ABNT_TABLE_CONFIG)
+                    make_table_text_readable(node)
                     tabela_count = tabela_count + 1
                 end
                 prev_was_table_caption = false
@@ -674,7 +700,9 @@ local prepare_pretextual_media
 ---@param _config table|nil Configuration (unused, interface contract)
 function M.create_additional_parts(temp_dir, log, _config)
     local parts = {
-        {file = "header1.xml", content = header_builder.build_page_number_header("right")},
+        -- Duplex layout from the official USP template: page numbers sit on
+        -- the outer edge (even pages left, odd pages right).
+        {file = "header1.xml", content = header_builder.build_page_number_header("left")},
         {file = "header2.xml", content = header_builder.build_page_number_header("right")},
         {file = "header3.xml", content = header_builder.build_empty_header()},
         {file = "header4.xml", content = header_builder.build_empty_header()},
@@ -726,6 +754,12 @@ local PRETEXTUAL_IMAGES = {
         default_asset = "assets/approval_page.png",
         disable_keys = {"approval_page", "approval_page_image", "use_approval_page_image"},
     },
+    ["back-cover"] = {
+        rid = "rIdAbntBackCover",
+        media = "abnt-back-cover.png",
+        config_keys = {"back_cover_pdf", "contra_capa_pdf", "back_cover_image", "back_cover_background"},
+        disable_keys = {"back_cover", "back_cover_image", "use_back_cover_image"},
+    },
 }
 
 local function docx_config(config)
@@ -768,10 +802,6 @@ local function command_output(cmd)
     pipe:close()
     if out and out ~= "" then return out end
     return nil
-end
-
-local function command_exists(name)
-    return command_output("command -v " .. shell_quote(name))
 end
 
 local function model_root()
@@ -889,8 +919,9 @@ local function ensure_image_content_types(content, config)
     return content
 end
 
-local function full_page_image_ooxml(rid, alt_text, behind_doc)
-    return xml.serialize_element(xml.node("w:p", {}, {
+local function full_page_image_node(rid, alt_text, behind_doc, drawing_id)
+    drawing_id = tostring(drawing_id or (behind_doc and 9201 or 9202))
+    return xml.node("w:p", {}, {
         xml.node("w:pPr", {}, {
             xml.node("w:spacing", {["w:before"] = "0", ["w:after"] = "0", ["w:line"] = "20", ["w:lineRule"] = "exact"}),
         }),
@@ -911,7 +942,7 @@ local function full_page_image_ooxml(rid, alt_text, behind_doc)
                     }),
                     xml.node("wp:extent", {cx = tostring(A4_EMU.width), cy = tostring(A4_EMU.height)}),
                     xml.node("wp:wrapNone"),
-                    xml.node("wp:docPr", {id = behind_doc and "9201" or "9202", name = alt_text or ""}),
+                    xml.node("wp:docPr", {id = drawing_id, name = alt_text or ""}),
                     xml.node("a:graphic", {["xmlns:a"] = "http://schemas.openxmlformats.org/drawingml/2006/main"}, {
                         xml.node("a:graphicData", {uri = "http://schemas.openxmlformats.org/drawingml/2006/picture"}, {
                             xml.node("pic:pic", {["xmlns:pic"] = "http://schemas.openxmlformats.org/drawingml/2006/picture"}, {
@@ -936,7 +967,11 @@ local function full_page_image_ooxml(rid, alt_text, behind_doc)
                 }),
             }),
         }),
-    }))
+    })
+end
+
+local function full_page_image_ooxml(rid, alt_text, behind_doc, drawing_id)
+    return xml.serialize_element(full_page_image_node(rid, alt_text, behind_doc, drawing_id))
 end
 
 local function replace_pretextual_markers(content, config, log)
@@ -960,6 +995,38 @@ local function replace_pretextual_markers(content, config, log)
     end
     log.debug("[ABNT-PRETEXTUAL] Replaced configured pre-textual page marker(s)")
     return content
+end
+
+local function append_back_cover(content, config, log)
+    local item = PRETEXTUAL_IMAGES["back-cover"]
+    if not configured_path(config, item) then return content end
+
+    local doc = xml.parse(content)
+    local body = xml.find_by_name(doc, "w:body")[1]
+    if not body then
+        log.warn("[ABNT-BACK-COVER] Could not find document body; contra-capa was not added")
+        return content
+    end
+
+    local insert_at = #body.kids + 1
+    for index = #body.kids, 1, -1 do
+        local child = body.kids[index]
+        if child.type == "element" and child.name == "sectPr" then
+            insert_at = index
+            break
+        end
+    end
+
+    local page_break = xml.node("w:p", {}, {
+        xml.node("w:r", {}, {xml.node("w:br", {["w:type"] = "page"})}),
+    })
+    xml.insert_child(body, page_break, insert_at)
+    xml.insert_child(body, full_page_image_node(
+        item.rid, "Contra-capa", false, 9205
+    ), insert_at + 1)
+
+    log.info("[ABNT-BACK-COVER] Added contra-capa as the final full-page image")
+    return xml.serialize(doc)
 end
 
 local function prepare_media(source, dest, log)
@@ -1192,6 +1259,10 @@ function M.process_document(content, _config, log, rels_content)
         content = M.inject_final_section(content, log, rels_content)
     end
 
+    -- The contra-capa is a distinct terminal page. It is intentionally added
+    -- after section construction, immediately before the body's final sectPr.
+    content = append_back_cover(content, _config, log)
+
     return content
 end
 
@@ -1263,352 +1334,15 @@ function M.run(path, config, log)
     return default_pp.postprocess(path, template, log, config, M)
 end
 
-local function truthy(value)
-    if value == true then return true end
-    if type(value) == "string" then
-        local normalized = value:lower()
-        return normalized == "1" or normalized == "true" or normalized == "yes" or normalized == "on"
-    end
-    return false
-end
-
-local function field_update_enabled(config)
-    local docx = docx_config(config)
-    if docx.update_fields ~= nil then return truthy(docx.update_fields) end
-    if docx.libreoffice_update_fields ~= nil then return truthy(docx.libreoffice_update_fields) end
-    if docx.refresh_fields ~= nil then return truthy(docx.refresh_fields) end
-    return false
-end
-
-local function pdf_export_enabled(config)
-    local docx = docx_config(config)
-    if docx.export_pdf ~= nil then return truthy(docx.export_pdf) end
-    if docx.pdf ~= nil then return truthy(docx.pdf) end
-    if docx.libreoffice_export_pdf ~= nil then return truthy(docx.libreoffice_export_pdf) end
-    return false
-end
-
-local function dirname(path)
-    return tostring(path):match("^(.*)/[^/]+$") or "."
-end
-
-local function default_pdf_path(path)
-    local stem = tostring(path):gsub("%.docx$", "")
-    if stem == path then return path .. ".pdf" end
-    return stem .. ".pdf"
-end
-
-local function pdf_output_path(path, config)
-    local docx = docx_config(config)
-    local configured = docx.pdf_path or docx.export_pdf_path
-    if configured and configured ~= "" then
-        if configured:match("^/") then return configured end
-        return ((config and config.project_root) or ".") .. "/" .. configured
-    end
-    return default_pdf_path(path)
-end
-
-local function make_temp_dir()
-    return command_output("mktemp -d 2>/dev/null")
-end
-
-local function remove_tree(path)
-    if path and path ~= "" then
-        os.execute("rm -rf " .. shell_quote(path))
-    end
-end
-
-local function ensure_parent_dir(path)
-    local dir = dirname(path)
-    if dir and dir ~= "." then
-        os.execute("mkdir -p " .. shell_quote(dir))
-    end
-end
-
-local function replace_file(source, target)
-    local data = read_binary(source)
-    if not data then return false end
-    return write_binary(target, data)
-end
-
-local function python_can_import_uno(python)
-    local ok = os.execute(shell_quote(python) .. " -c " .. shell_quote("import uno") .. " >/dev/null 2>&1")
-    return ok == true or ok == 0
-end
-
-local function find_uno_python()
-    local candidates = {"/usr/bin/python3"}
-    local path_python3 = command_exists("python3")
-    if path_python3 then table.insert(candidates, path_python3) end
-    local path_python = command_exists("python")
-    if path_python then table.insert(candidates, path_python) end
-
-    local seen = {}
-    for _, candidate in ipairs(candidates) do
-        if candidate and not seen[candidate] then
-            seen[candidate] = true
-            if candidate:match("^/") or command_exists(candidate) then
-                if python_can_import_uno(candidate) then
-                    return candidate
-                end
-            end
+local function warn_for_missing_exact_fonts(log)
+    local required = {"Times New Roman", "Arial", "Courier New"}
+    for _, font_name in ipairs(required) do
+        local resolved = command_output("fc-match -f '%{family}' " .. shell_quote(font_name))
+        if not resolved or not resolved:find(font_name, 1, true) then
+            log.warn("[ABNT-FONTS] Exact font '%s' is unavailable; LibreOffice PDF metrics may differ (resolved: %s)",
+                font_name, resolved or "unknown")
         end
     end
-    return nil
-end
-
-local function write_field_update_script(path)
-    local script = [=[
-import os
-import subprocess
-import sys
-import time
-from pathlib import Path
-
-import uno
-from com.sun.star.beans import PropertyValue
-
-
-def prop(name, value):
-    item = PropertyValue()
-    item.Name = name
-    item.Value = value
-    return item
-
-
-def file_url(path):
-    return Path(path).resolve().as_uri()
-
-
-def connect(port):
-    local_ctx = uno.getComponentContext()
-    resolver = local_ctx.ServiceManager.createInstanceWithContext(
-        "com.sun.star.bridge.UnoUrlResolver", local_ctx
-    )
-    url = f"uno:socket,host=127.0.0.1,port={port};urp;StarOffice.ComponentContext"
-    deadline = time.time() + 30
-    last_error = None
-    while time.time() < deadline:
-        try:
-            return resolver.resolve(url)
-        except Exception as exc:
-            last_error = exc
-            time.sleep(0.5)
-    raise RuntimeError(f"could not connect to LibreOffice UNO: {last_error}")
-
-
-def update_document(doc, desktop, ctx):
-    try:
-        doc.updateLinks()
-    except Exception:
-        pass
-
-    for method_name in ("calculateAll", "updateAll"):
-        method = getattr(doc, method_name, None)
-        if method:
-            try:
-                method()
-            except Exception:
-                pass
-
-    try:
-        fields = doc.getTextFields().createEnumeration()
-        while fields.hasMoreElements():
-            try:
-                fields.nextElement().update()
-            except Exception:
-                pass
-    except Exception:
-        pass
-
-    try:
-        indexes = doc.getDocumentIndexes()
-        for idx in range(indexes.getCount()):
-            indexes.getByIndex(idx).update()
-    except Exception:
-        pass
-
-    try:
-        frame = doc.getCurrentController().getFrame()
-        dispatcher = ctx.ServiceManager.createInstanceWithContext(
-            "com.sun.star.frame.DispatchHelper", ctx
-        )
-        for command in (".uno:SelectAll", ".uno:UpdateFields", ".uno:UpdateAllIndexes", ".uno:UpdateAll"):
-            try:
-                dispatcher.executeDispatch(frame, command, "", 0, ())
-            except Exception:
-                pass
-    except Exception:
-        pass
-
-
-def main():
-    if len(sys.argv) != 7:
-        print("usage: lo_update_fields.py INPUT.docx OUTPUT.docx|- OUTPUT.pdf|- PROFILE_DIR PORT SOFFICE", file=sys.stderr)
-        return 2
-
-    source, target_docx, target_pdf, profile_dir, port, soffice = sys.argv[1:]
-    profile = Path(profile_dir)
-    profile.mkdir(parents=True, exist_ok=True)
-
-    proc = subprocess.Popen(
-        [
-            soffice,
-            "--headless",
-            "--nologo",
-            "--nodefault",
-            "--nofirststartwizard",
-            "--nolockcheck",
-            f"-env:UserInstallation={profile.resolve().as_uri()}",
-            f"--accept=socket,host=127.0.0.1,port={port};urp;StarOffice.ComponentContext",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    doc = None
-    desktop = None
-    try:
-        ctx = connect(port)
-        desktop = ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", ctx)
-        doc = desktop.loadComponentFromURL(
-            file_url(source),
-            "_blank",
-            0,
-            (
-                prop("Hidden", True),
-                prop("ReadOnly", False),
-                prop("UpdateDocMode", 3),
-            ),
-        )
-        if doc is None:
-            raise RuntimeError("LibreOffice could not open source document")
-
-        update_document(doc, desktop, ctx)
-        if target_docx != "-":
-            doc.storeAsURL(
-                file_url(target_docx),
-                (
-                    prop("FilterName", "Office Open XML Text"),
-                    prop("Overwrite", True),
-                ),
-            )
-        if target_pdf != "-":
-            doc.storeToURL(
-                file_url(target_pdf),
-                (
-                    prop("FilterName", "writer_pdf_Export"),
-                    prop("Overwrite", True),
-                ),
-            )
-        return 0
-    finally:
-        if doc is not None:
-            try:
-                doc.close(True)
-            except Exception:
-                try:
-                    doc.dispose()
-                except Exception:
-                    pass
-        if desktop is not None:
-            try:
-                desktop.terminate()
-            except Exception:
-                pass
-        try:
-            proc.terminate()
-            proc.wait(timeout=10)
-        except Exception:
-            try:
-                proc.kill()
-            except Exception:
-                pass
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-]=]
-    local f = io.open(path, "w")
-    if not f then return false end
-    f:write(script)
-    f:close()
-    return true
-end
-
-local function finalize_with_libreoffice(path, config, log, opts)
-    local soffice = command_exists("libreoffice") or command_exists("soffice")
-    if not soffice then
-        log.warn("[ABNT-LO] LibreOffice not found; skipping LibreOffice finalization for %s", path)
-        return false
-    end
-    local python = find_uno_python()
-    if not python then
-        log.warn("[ABNT-LO] No Python executable with UNO support found; skipping LibreOffice finalization for %s", path)
-        return false
-    end
-
-    local temp_dir = make_temp_dir()
-    if not temp_dir then
-        log.warn("[ABNT-LO] Could not create temporary directory; skipping LibreOffice finalization for %s", path)
-        return false
-    end
-
-    local script_path = temp_dir .. "/lo_update_fields.py"
-    local profile_dir = temp_dir .. "/lo-profile"
-    local updated_docx_path = temp_dir .. "/updated.docx"
-    local target_docx = opts.update_docx and updated_docx_path or "-"
-    local target_pdf = opts.export_pdf and pdf_output_path(path, config) or "-"
-    local port = tostring(23000 + (os.time() % 20000))
-
-    if not write_field_update_script(script_path) then
-        remove_tree(temp_dir)
-        log.warn("[ABNT-LO] Could not write LibreOffice helper script; skipping %s", path)
-        return false
-    end
-
-    if target_pdf ~= "-" then
-        ensure_parent_dir(target_pdf)
-    end
-
-    local cmd = table.concat({
-        shell_quote(python),
-        shell_quote(script_path),
-        shell_quote(path),
-        shell_quote(target_docx),
-        shell_quote(target_pdf),
-        shell_quote(profile_dir),
-        shell_quote(port),
-        shell_quote(soffice),
-    }, " ")
-
-    local ok = os.execute(cmd)
-    local success = ok == true or ok == 0
-
-    if success and opts.update_docx then
-        if file_exists(updated_docx_path) and replace_file(updated_docx_path, path) then
-            log.info("[ABNT-FIELDS] Updated DOCX fields in place: %s", path)
-        else
-            success = false
-            log.warn("[ABNT-FIELDS] LibreOffice did not produce updated DOCX for %s", path)
-        end
-    end
-
-    if success and opts.export_pdf then
-        if file_exists(target_pdf) then
-            log.info("[ABNT-PDF] Generated LibreOffice PDF: %s", target_pdf)
-        else
-            success = false
-            log.warn("[ABNT-PDF] LibreOffice did not produce PDF for %s", path)
-        end
-    end
-
-    remove_tree(temp_dir)
-
-    if not success then
-        log.warn("[ABNT-LO] LibreOffice finalization failed for %s", path)
-    end
-    return success
 end
 
 ---Finalize batch of DOCX files.
@@ -1617,22 +1351,16 @@ end
 ---@param config table Configuration (must contain template)
 ---@param log table Logger instance
 function M.finalize(paths, config, log)
+    local libreoffice = require("infra.process.libreoffice")
     for _, path in ipairs(paths) do
         local ok, err = pcall(M.run, path, config, log)
         if not ok then
             log.warn("[ABNT-DOCX] Postprocess failed for %s: %s", path, tostring(err))
         else
-            local update_docx = field_update_enabled(config)
-            local export_pdf = pdf_export_enabled(config)
-            if update_docx or export_pdf then
-                local lo_ok, lo_err = pcall(finalize_with_libreoffice, path, config, log, {
-                    update_docx = update_docx,
-                    export_pdf = export_pdf,
-                })
-                if not lo_ok then
-                    log.warn("[ABNT-LO] LibreOffice finalization failed for %s: %s", path, tostring(lo_err))
-                end
+            if libreoffice.resolve_options(path, config) then
+                warn_for_missing_exact_fonts(log)
             end
+            libreoffice.maybe_finalize(path, config, log)
         end
     end
 end

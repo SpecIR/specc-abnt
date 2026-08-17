@@ -6,8 +6,8 @@
 #   2. Write your document in a directory containing a project.yaml
 #      (the default is examples/ — see PROJECT_DIR below).
 #   3. Push to main. After the model image is built and published, this
-#      workflow builds the DOCX/PDF with ghcr.io/specir/specc-abnt:libreoffice
-#      and attaches them to a release.
+#      workflow builds the DOCX/PDF with ghcr.io/specir/specc-abnt:latest
+#      (LibreOffice ships in the image) and attaches them to a release.
 #
 # To extend: change PROJECT_DIR to your document directory, or add more
 # directories to the build step — DOCX/PDF artifacts under <dir>/build/ are
@@ -22,9 +22,9 @@ on:
   workflow_dispatch:
 
 env:
-  # Ready-made SpecCompiler + ABNT + LibreOffice image. Forks keep this default;
-  # point it at your own image only if you extend the model itself.
-  SPECC_IMAGE: ghcr.io/specir/specc-abnt:libreoffice
+  # Ready-made SpecCompiler + ABNT image (LibreOffice included). Forks keep
+  # this default; point it at your own image only if you extend the model.
+  SPECC_IMAGE: ghcr.io/specir/specc-abnt:latest
   # Directory containing your project.yaml.
   PROJECT_DIR: examples
 
