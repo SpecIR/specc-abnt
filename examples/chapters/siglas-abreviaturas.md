@@ -6,4 +6,9 @@ Para definir uma sigla, use:
 
     `sigla: Termo Completo (SIGLA)`
 
-Ao longo deste documento, várias siglas foram utilizadas: ABNT, SDN, ECH, UML, IBGE. Todas aparecem automaticamente na Lista de Abreviaturas e Siglas.
+Ao longo deste documento, as siglas ABNT, IBGE, UML, IEEE e APA foram definidas dessa
+forma. Todas aparecem automaticamente na Lista de Abreviaturas e Siglas, em ordem
+alfabética, sem qualquer marcação manual.
+
+A definição pode aparecer em qualquer capítulo — a primeira ocorrência no documento
+montado é que determina onde o termo por extenso é exibido.

@@ -184,6 +184,22 @@ return {
             keep_lines = true,
         },
 
+        -- Quadro Caption - ABNT: quadro caption goes ABOVE the quadro.
+        -- Visually identical to TableCaption; the distinct name is what lets
+        -- the DOCX post-processor tell a quadro (closed grid) from a tabela
+        -- (open IBGE borders), since Pandoc drops Div attributes.
+        {
+            id = "QuadroCaption",
+            name = "Quadro Caption",
+            based_on = "Normal",
+            font = { name = "Times New Roman", size = 12 },
+            spacing = { before = 0, after = 0, line = 1.0 },
+            indent = { first_line = "0cm" },
+            alignment = "center",
+            keep_next = true,
+            keep_lines = true,
+        },
+
         -- Image Caption - for figures (Pandoc uses this)
         {
             id = "ImageCaption",
@@ -888,7 +904,7 @@ return {
         },
         listing = {
             template = "{prefix} {number} {separator} {title}",
-            prefix = "Quadro",
+            prefix = "Listagem",
             separator = "–",
             style = "Caption",
         },
@@ -938,15 +954,29 @@ return {
         },
         listing = {
             template = "{prefix} {number} {separator} {title}",
-            prefix = "Quadro",
+            prefix = "Listagem",
             separator = "–",
             style = "Caption",
             chapter_numbering = true,
             chapter_separator = ".",
             chapter_level = 1,
-            sequence_name = "Quadro",
+            sequence_name = "Listagem",
             position = "above",
             source_style = "Source",
+            source_prefix = "Fonte: ",
+        },
+        quadro_table = {
+            template = "{prefix} {number} {separator} {title}",
+            prefix = "Quadro",
+            separator = "–",
+            -- Distinct style so the post-processor can apply the closed grid.
+            style = "QuadroCaption",
+            chapter_numbering = true,
+            chapter_separator = ".",
+            chapter_level = 1,
+            sequence_name = "Quadro",
+            position = "above",
+            source_style = "TableSource",
             source_prefix = "Fonte: ",
         },
         chart = {
@@ -988,6 +1018,7 @@ return {
             CHART = 'before',
             PLANTUML = 'before',
             TABLE = 'before',
+            QUADRO_TABLE = 'before',
             LISTING = 'before',
             MATH = 'inline',
         },

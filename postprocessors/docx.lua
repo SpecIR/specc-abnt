@@ -104,7 +104,7 @@ local ABNT_HEADING_MAP = {
     Heading5 = { ilvl = "4", numId = "1" },
 }
 
--- IBGE three-line table config for table_formatter
+-- IBGE three-line table config (open borders, for numeric data)
 local ABNT_TABLE_CONFIG = {
     borders = {
         top = { style = "single", sz = "8", space = "0", color = "000000" },
@@ -123,6 +123,29 @@ local ABNT_TABLE_CONFIG = {
         remove_shading = true,
         cell_borders = {
             bottom = { style = "single", sz = "4", space = "0", color = "000000" }
+        }
+    }
+}
+
+-- Quadro (grid) table config for textual/structured data (closed borders with complete grid)
+local ABNT_QUADRO_CONFIG = {
+    borders = {
+        top = { style = "single", sz = "8", space = "0", color = "000000" },
+        bottom = { style = "single", sz = "8", space = "0", color = "000000" },
+        left = { style = "single", sz = "8", space = "0", color = "000000" },
+        right = { style = "single", sz = "8", space = "0", color = "000000" },
+        insideH = { style = "single", sz = "8", space = "0", color = "000000" },
+        insideV = { style = "single", sz = "8", space = "0", color = "000000" },
+    },
+    cell_margins = { top = "90", bottom = "90", left = "90", right = "90" },
+    paragraph = { zero_indent = true },
+    header = {
+        remove_shading = true,
+        cell_borders = {
+            top = { style = "single", sz = "8", space = "0", color = "000000" },
+            bottom = { style = "single", sz = "8", space = "0", color = "000000" },
+            left = { style = "single", sz = "8", space = "0", color = "000000" },
+            right = { style = "single", sz = "8", space = "0", color = "000000" },
         }
     }
 }
@@ -187,13 +210,21 @@ local function make_table_text_readable(tbl)
     end
 end
 
----Apply ABNT table formatting by detecting tables after caption paragraphs.
----Per ABNT NBR 14724:2011:
----  - Tables after TableCaption: IBGE three-line style (open borders)
----  - Other tables: Left unchanged (layout tables, equations)
----
----Detection strategy: Tables that immediately follow a TableCaption paragraph
----are data tables that need IBGE styling.
+-- Caption style -> border geometry for the table that follows it.
+-- TableCaption marks a tabela (numeric data, IBGE open sides); QuadroCaption
+-- marks a quadro (textual data, closed grid). The float type picks the caption
+-- style via the preset, so this is the one signal that survives Pandoc's docx
+-- writer, which drops Div classes and key-value pairs.
+local CAPTION_TABLE_STYLES = {
+    TableCaption  = { config = "table",  label = "tabela" },
+    QuadroCaption = { config = "quadro", label = "quadro" },
+}
+
+---Apply ABNT table formatting to tables that follow a caption paragraph.
+---Per the IBGE tabular norms adopted by ABNT NBR 14724:2011:
+---  - tabela (TableCaption):  IBGE three-line style, sides left open
+---  - quadro (QuadroCaption): closed borders with a complete cell grid
+---  - every other table (cover layout, equations): left untouched
 ---@param content string document.xml content
 ---@param log table Logger instance
 ---@return string Modified content
@@ -211,34 +242,35 @@ function M.fix_tables(content, log)
         return content
     end
 
-    local kids = body.kids or {}
-    local tabela_count = 0
+    local configs = { table = ABNT_TABLE_CONFIG, quadro = ABNT_QUADRO_CONFIG }
+    local counts = { tabela = 0, quadro = 0 }
 
-    -- Track if previous element was TableCaption
-    local prev_was_table_caption = false
+    -- Which caption style, if any, immediately precedes the current element.
+    local pending = nil
 
-    for _, node in ipairs(kids) do
+    for _, node in ipairs(body.kids or {}) do
         if node.type == "element" then
             local name = node.name
             if name == "w:p" or name == "p" then
-                local style = get_table_para_style(node)
-                prev_was_table_caption = (style == "TableCaption")
+                pending = CAPTION_TABLE_STYLES[get_table_para_style(node)]
             elseif name == "w:tbl" or name == "tbl" then
-                if prev_was_table_caption then
-                    -- This is a data table - apply IBGE style via shared lib
-                    table_formatter.format_table_node(node, ABNT_TABLE_CONFIG)
+                if pending then
+                    table_formatter.format_table_node(node, configs[pending.config])
                     make_table_text_readable(node)
-                    tabela_count = tabela_count + 1
+                    counts[pending.label] = counts[pending.label] + 1
                 end
-                prev_was_table_caption = false
+                pending = nil
             else
-                prev_was_table_caption = false
+                pending = nil
             end
         end
     end
 
-    if tabela_count > 0 then
-        log.info('[ABNT-TABLES] Applied IBGE three-line style to %d tabela(s)', tabela_count)
+    if counts.tabela > 0 then
+        log.info('[ABNT-TABLES] Applied IBGE three-line style to %d tabela(s)', counts.tabela)
+    end
+    if counts.quadro > 0 then
+        log.info('[ABNT-TABLES] Applied closed grid style to %d quadro(s)', counts.quadro)
     end
 
     return xml.serialize(doc)

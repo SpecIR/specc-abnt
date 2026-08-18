@@ -18,7 +18,7 @@ Para encadernação, as margens são espelhadas:
 - Margem interna (encadernação): 3 cm
 - Margem externa: 2 cm
 
-### Formatação de Tabelas (Padrão IBGE)
+### Formatação de Tabelas e Quadros (Padrão IBGE)
 
 Tabelas seguem o padrão do IBGE [ibge1993](@cite):
 - Bordas abertas nas laterais
@@ -26,8 +26,12 @@ Tabelas seguem o padrão do IBGE [ibge1993](@cite):
 - Título acima da tabela
 - Fonte abaixo
 
+Quadros, por conterem informação textual, recebem grade completa e bordas fechadas.
+O SpecCompiler aplica cada geometria automaticamente a partir do tipo do bloco —
+ver o capítulo *Tabelas e Quadros*.
+
 ### Template Extensível
 
 O template ABNT é apenas um exemplo das capacidades do SpecCompiler. O sistema de extensões permite criar templates para qualquer padrão documental — `sigla: Institute of Electrical and Electronics Engineers (IEEE)`, `sigla: American Psychological Association (APA)`, normas corporativas, etc.
 
-O template ABNT estende o template `default`, herdando funcionalidades como gráficos, PlantUML e tabelas (list-table, CSV, TSV), e adicionando tipos específicos para a estrutura acadêmica brasileira.
+O template ABNT estende o template `default`, herdando funcionalidades como gráficos, PlantUML e tabelas (list-table, CSV, TSV), e adicionando tipos específicos para a estrutura acadêmica brasileira — entre eles o quadro tabular, ausente em normas de outros países.

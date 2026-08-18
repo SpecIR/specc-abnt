@@ -1,18 +1,29 @@
 ## Referências Cruzadas
 
-O SpecCompiler suporta referências cruzadas para figuras, tabelas, quadros e seções:
+O SpecCompiler suporta referências cruzadas para figuras, tabelas, quadros,
+equações e seções. O texto exibido ("Figura 1", "Quadro 3") é resolvido na
+compilação — nunca digitado à mão:
 
 - Figuras: conforme demonstrado na [fig:capybara](#)
-- Tabelas: os dados da [csv:dados-regionais](#) mostram...
-- Quadros: o [listing:diferenca-tabela-quadro](#) explica...
+- Tabelas: os dados da [csv:dados-regionais](#) mostram a evolução regional
+- Quadros: o [list-table:elementos-pretextuais](#) enumera os elementos
+- Listagens: a [listing:diferenca-tabela-quadro](#) contrasta as duas formatações
+- Equações: a [math:bhaskara](#) resolve o segundo grau
 
-A sintaxe usa `[type:identificador](#)`:
+A sintaxe usa `[prefixo:identificador](#)`, onde o prefixo é o tipo do bloco
+referenciado:
 
-    Figura \[fig:id](#)
-    Tabela \[csv:id](#)
-    Quadro \[listing:id](#)
+    [fig:id](#)            → Figura N
+    [csv:id](#)            → Tabela N
+    [list-table:id](#)     → Quadro N
+    [listing:id](#)        → Listagem N
+    [math:id](#)           → Equação N
+    [chart:id](#)          → Gráfico N
 
-O sistema infere o **tipo de relação** (`XREF_FIGURE`, `XREF_TABLE`, `XREF_LISTING`, `XREF_MATH`) para cada elemento flutuante durante a compilação. O gráfico a seguir ([chart:xref-usage](#)) mostra a distribuição desses tipos por seção—dados extraídos diretamente do banco de dados do documento:
+Qualquer alias do tipo funciona como prefixo: `[tab:id](#)` e `[csv:id](#)`
+apontam para o mesmo tipo Tabela.
+
+O sistema infere o **tipo de relação** (`XREF_FIGURE`, `XREF_TABLE`, `XREF_QUADRO`, `XREF_LISTING`, `XREF_MATH`) para cada elemento flutuante durante a compilação. Referências não resolvidas interrompem o build, o que impede legendas órfãs no documento final. O gráfico a seguir ([chart:xref-usage](#)) mostra a distribuição desses tipos por seção—dados extraídos diretamente do banco de dados do documento:
 
 ```chart:xref-usage{query="xref_usage" caption="Tipos XREF por Seção — inferência de relações em tempo de compilação" width=750 height=420}
 {

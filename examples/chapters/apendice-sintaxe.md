@@ -22,11 +22,18 @@
     @enduml
     ```
 
-### Gráficos com Query
+### Gráficos
 
     ```chart:id{query="nome_da_view" caption="Título" width="800" height="500"}
     { ...configuração ECharts... }
     ```
+
+    ```chart:id{generator="gauss" mean="0" sigma="1" caption="Título" height="5cm"}
+    { ...configuração ECharts... }
+    ```
+
+- `query`: consulta uma view SQL sobre o banco do documento
+- `generator` (ou `view`): invoca um módulo Lua de `types/views/`
 
 ### Atributos de Dimensões e Fonte
 
@@ -36,28 +43,68 @@ Aplicáveis a `fig:`, `puml:`, `chart:`:
 - `height`: Altura (px, %, cm, in)
 - `source`: Fonte — texto, `@citação`, ou omitido → "Elaborado pelo autor"
 
-### Tabelas (list-table)
-
-    ```list-table:id{caption="Título" source="Fonte"}
-    > header-rows: 1
-    > aligns: l,c,r
-    * - Col1
-      - Col2
-    * - Valor1
-      - Valor2
-    ```
-
-### Tabelas (CSV)
+### Tabelas (dados numéricos)
 
     ```csv:id{caption="Título" source="Fonte"}
     Col1,Col2,Col3
     Val1,Val2,Val3
     ```
 
-### Quadros
+    ```list-table-t:id{caption="Título" source="Fonte"}
+    > header-rows: 1
+    > aligns: l,r
+    * - Coluna
+      - Valor
+    * - Norte
+      - 150
+    ```
+
+Renderiza com bordas abertas nas laterais (estilo IBGE) e legenda `Tabela N`.
+
+### Quadros (informação textual)
+
+    ```list-table:id{caption="Título" source="Fonte"}
+    > header-rows: 1
+    > aligns: l,c,l
+    * - Col1
+      - Col2
+      - Col3
+    * - Valor1
+      - Valor2
+      - Valor3
+    ```
+
+    ```csv-q:id{caption="Título" source="Fonte"}
+    Termo,Definição
+    Tabela,Dados numéricos
+    ```
+
+Renderiza com grade completa e legenda `Quadro N`.
+
+Parâmetros de `list-table` (linhas iniciadas por `>`):
+
+- `header-rows`: número de linhas de cabeçalho
+- `aligns`: alinhamento por coluna — `l`, `c`, `r`
+- `widths`: larguras relativas das colunas
+
+### Listagens (código e texto preformatado)
 
     ```listing:id{caption="Título" source="Fonte"}
-    Conteúdo textual do quadro
+    Conteúdo textual, sem realce de sintaxe
+    ```
+
+    ```src.c:id{caption="Título" source="Fonte"}
+    int main(void) { return 0; }
+    ```
+
+Renderiza com moldura e legenda `Listagem N`.
+
+### Equações
+
+    `math: a^2 + b^2 = c^2`          — inline
+
+    ```math:id{caption="Título"}
+    x = (-b +- sqrt(b^2 - 4ac)) / (2a)
     ```
 
 ### Citações
@@ -74,9 +121,16 @@ Aplicáveis a `fig:`, `puml:`, `chart:`:
 
 ### Referências Cruzadas
 
-    Figura [fig:id](#)
-    Tabela [table:id](#)
-    Quadro [listing:id](#)
+    [fig:id](#)          → Figura N
+    [csv:id](#)          → Tabela N
+    [list-table:id](#)   → Quadro N
+    [listing:id](#)      → Listagem N
+    [math:id](#)         → Equação N
+    [chart:id](#)        → Gráfico N
+    [puml:id](#)         → Figura N
+
+O prefixo pode ser qualquer alias do tipo. Referências não resolvidas
+interrompem o build.
 
 ### Siglas
 
@@ -99,22 +153,35 @@ figuras, tabelas, citações, siglas e referências cruzadas são processados em
 
 ### Configuração (project.yaml)
 
-    # Template e tipos
-    template: abnt
-    type_file: ../dist/db/seed.sql
+    project:
+      code: MONOGRAFIA_EXAMPLE
+      name: Exemplo de Monografia ABNT
 
-    # Arquivos fonte
+    template: abnt
+    style: academico
+    output_dir: build/
+
     doc_files:
       - monografia.md
 
-    # Saída
-    output_dir: build/
-    output_formats: [docx]
-
-    # Estilos DOCX
-    docx:
-      preset: academico
-      reference_doc: ../dist/reference.docx
-
     # Bibliografia (citeproc); o estilo CSL é fornecido pelo modelo ABNT.
     bibliography: references.bib
+
+    outputs:
+      - format: docx
+        path: "{spec_id}.docx"
+
+    docx:
+      update_fields: true   # atualiza sumário e listas ao gerar
+      export_pdf: true      # exporta PDF via LibreOffice
+
+### Seções Pré-textuais Automáticas
+
+Basta declarar o cabeçalho; o conteúdo é gerado na compilação:
+
+    ## Sumário
+    ## Lista de Figuras
+    ## Lista de Tabelas
+    ## Lista de Quadros
+    ## Lista de Listagens
+    ## Lista de Abreviaturas e Siglas

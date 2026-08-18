@@ -3,11 +3,11 @@
 Este documento demonstrou como utilizar o template ABNT do SpecCompiler para criar trabalhos acadêmicos em conformidade com a NBR 14724 [NBR14724:2011](@cite). Através de exemplos práticos, foram apresentados:
 
 1. Inserção de figuras com legendas padronizadas ([fig:capybara](#))
-2. Gráficos com dados do banco ([chart:abnt-types](#))
+2. Gráficos gerados por funções Lua ([chart:curva-gauss](#))
 3. Diagramas PlantUML ([puml:fluxo-documento](#))
-4. Tabelas com sintaxe list-table ([list-table:elementos-pretextuais](#))
+4. Quadros com sintaxe list-table ([list-table:elementos-pretextuais](#))
 5. Tabelas com sintaxe CSV ([csv:dados-regionais](#))
-6. Quadros para informações textuais ([listing:vantagens-specdown](#))
+6. Listagens emolduradas para texto e código ([listing:vantagens-specdown](#))
 7. Citações bibliográficas conforme ABNT
 8. Referências cruzadas automáticas
 9. Gerenciamento de siglas
@@ -32,8 +32,9 @@ Neste documento, elementos como:
 
 - a seção `## Sumário` — sumário gerado automaticamente da estrutura
 - a seção `## Lista de Figuras` — lista de figuras extraída do banco de dados
-- a seção `## Lista de Siglas` — lista de siglas populada durante a compilação
-- `chart:abnt-types{query="..."}` — gráfico que consulta views SQL
+- as seções `## Lista de Quadros` e `## Lista de Listagens` — geradas dos contadores
+- a seção `## Lista de Abreviaturas e Siglas` — siglas populadas durante a compilação
+- `chart:xref-usage{query="..."}` — gráfico que consulta views SQL
 
 ...não são conteúdo estático. São **consultas materializadas** que se atualizam a cada build. O documento é simultaneamente **documentação** (texto autoral) e **relatório** (dados do sistema de tipos).
 

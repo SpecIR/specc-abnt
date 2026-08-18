@@ -1,33 +1,89 @@
-## Tabelas e Quadros
+## Tabelas, Quadros e Listagens
 
-A ABNT distingue entre **tabelas** e **quadros** — uma distinção importante que o SpecCompiler respeita.
+A ABNT distingue **tabela** de **quadro**. O SpecCompiler trata essa distinção como
+tipos diferentes — não como uma opção de formatação — e acrescenta um terceiro tipo,
+a **listagem**, para código e texto preformatado.
+
+Cada um tem legenda, contador e lista pré-textual próprios.
 
 ### A Diferença
 
 Conforme as normas de apresentação tabular do `sigla: Instituto Brasileiro de Geografia e Estatística (IBGE)` [ibge1993](@cite):
 
-- **Tabela**: Apresenta dados numéricos/estatísticos. Formatação com bordas abertas nas laterais (sem linhas verticais nas extremidades).
-- **Quadro**: Apresenta informações textuais organizadas. Formatação com bordas fechadas em todos os lados.
+- **Tabela**: dados numéricos ou estatísticos. Bordas abertas nas laterais — apenas
+  linhas horizontais no topo, sob o cabeçalho e na base (estilo de três linhas).
+- **Quadro**: informações textuais. Bordas fechadas nos quatro lados e grade
+  completa, com todas as células delimitadas.
 
-O [listing:diferenca-tabela-quadro](#) resume estas diferenças:
+A [listing:diferenca-tabela-quadro](#) resume as duas formatações:
 
 ```listing:diferenca-tabela-quadro{caption="Diferença entre Tabela e Quadro conforme ABNT/IBGE" source="@ibge1993"}
-TABELA
-- Contém dados numéricos/estatísticos
-- Bordas abertas nas laterais
-- Linhas horizontais: topo, separador do cabeçalho, base
-- Sem linhas verticais nas extremidades
-
-QUADRO
-- Contém informações textuais
-- Bordas fechadas em todos os lados
-- Grade completa (todas as células delimitadas)
-- Usado para definições, comparações textuais
+TABELA                                  QUADRO
+──────────────────────────────────────  ──────────────────────────────────────
+Dados numéricos/estatísticos            Informações textuais
+Bordas abertas nas laterais             Bordas fechadas nos quatro lados
+Só linhas horizontais                   Grade completa (todas as células)
+Legenda "Tabela N"                      Legenda "Quadro N"
 ```
 
-### Sintaxe list-table
+### Escolhendo o Tipo
 
-A sintaxe `list-table` é ideal para tabelas complexas. A [list-table:elementos-pretextuais](#) demonstra uma tabela com múltiplas colunas:
+Cada sintaxe tem um padrão que corresponde ao seu uso mais comum, e uma variante
+para o caso oposto. O [list-table:sintaxes-tabulares](#) resume o mapeamento:
+
+```list-table:sintaxes-tabulares{caption="Sintaxes tabulares e a formatação resultante" source="Elaboração própria"}
+> header-rows: 1
+> aligns: l,l,l
+
+* - Sintaxe
+  - Resultado
+  - Quando usar
+* - `csv:`
+  - Tabela
+  - Dados numéricos em formato CSV
+* - `csv-q:`
+  - Quadro
+  - Informações textuais em formato CSV
+* - `list-table:`
+  - Quadro
+  - Informações textuais em múltiplas colunas
+* - `list-table-t:`
+  - Tabela
+  - Dados numéricos em formato list-table
+* - `listing:` / `src.<ext>:`
+  - Listagem
+  - Código ou texto preformatado, com moldura
+```
+
+O padrão segue a natureza de cada sintaxe: CSV nasceu para dados numéricos, e a
+sintaxe `list-table` existe justamente para células com texto longo. As variantes
+`csv-q:` e `list-table-t:` cobrem as exceções.
+
+Os três tipos são numerados de forma independente: `Tabela 1`, `Quadro 1` e
+`Listagem 1` podem coexistir. Cada um alimenta sua própria lista pré-textual —
+Lista de Tabelas, Lista de Quadros e Lista de Listagens.
+
+### Sintaxe CSV — Tabela
+
+Para dados numéricos, a sintaxe CSV é a mais concisa. A [csv:dados-regionais](#)
+renderiza como tabela, com as laterais abertas:
+
+```csv:dados-regionais{caption="Dados regionais — exemplo de tabela CSV" source="Dados fictícios"}
+Região,2022,2023,2024
+Norte,150,175,200
+Nordeste,280,310,350
+Centro-Oeste,120,140,160
+Sudeste,450,520,580
+Sul,200,230,260
+```
+
+### Sintaxe list-table — Quadro
+
+A sintaxe `list-table` acomoda células com texto longo, e por isso renderiza como
+quadro. Cada linha começa com `* -` e cada célula seguinte com `-`. As linhas
+iniciadas por `>` configuram a tabela.
+
+O [list-table:elementos-pretextuais](#) demonstra a estrutura completa:
 
 ```list-table:elementos-pretextuais{caption="Elementos pré-textuais conforme NBR 14724" source="@NBR14724:2011"}
 > header-rows: 1
@@ -49,7 +105,7 @@ A sintaxe `list-table` é ideal para tabelas complexas. A [list-table:elementos-
   - Não
   - Lista de correções
 * - Folha de aprovação
-  - Sim*
+  - Sim
   - Assinaturas da banca
 * - Dedicatória
   - Não
@@ -80,32 +136,29 @@ A sintaxe `list-table` é ideal para tabelas complexas. A [list-table:elementos-
   - Índice de conteúdo [NBR6027:2012](@cite)
 ```
 
-### Sintaxe CSV
+Os parâmetros de configuração aceitos são `header-rows` (quantas linhas iniciais
+formam o cabeçalho), `aligns` (alinhamento por coluna: `l`, `c` ou `r`) e
+`widths` (larguras relativas).
 
-Para dados tabulares simples, a sintaxe CSV é mais concisa. A [csv:dados-regionais](#) demonstra:
+### Listagens
 
-```csv:dados-regionais{caption="Dados regionais — exemplo de tabela CSV" source="Dados fictícios"}
-Região,2022,2023,2024
-Norte,150,175,200
-Nordeste,280,310,350
-Centro-Oeste,120,140,160
-Sudeste,450,520,580
-Sul,200,230,260
-```
+Uma **listagem** é um bloco de texto preformatado com moldura, onde as quebras de
+linha têm significado — código-fonte, pseudocódigo, saída de terminal, diagramas
+em ASCII. Diferente do quadro, não tem células.
 
-### Quadros e Listagens de Código
+Há duas sintaxes:
 
-O SpecCompiler oferece duas sintaxes para criar quadros (código/listagens):
+1. **`listing:label`** — sem realce de sintaxe. Para texto estruturado, pseudocódigo
+   ou blocos que não são de nenhuma linguagem em particular.
 
-1. **`listing:label`** — Quadro genérico, sem realce de sintaxe. Ideal para texto estruturado, pseudocódigo ou informações textuais.
+2. **`src.<ext>:label`** — com realce de sintaxe. O `<ext>` indica a linguagem
+   (`lua`, `c`, `python`, `js`, `sql`…), colorizada via Pandoc Skylighting.
 
-2. **`src.<ext>:label`** — Listagem com realce de sintaxe. O `<ext>` indica a linguagem (lua, c, python, js, etc.). Utiliza o Pandoc Skylighting para colorização.
+Ambas aceitam `caption` e `source`, e recebem moldura no template ABNT.
 
-Ambas as sintaxes suportam os atributos `caption` e `source`, e são renderizadas com moldura (borda) no template ABNT.
+#### Listagem Textual (sem realce)
 
-#### Quadro Textual (sem realce)
-
-O [listing:vantagens-specdown](#) demonstra a sintaxe `listing:` para informações textuais:
+A [listing:vantagens-specdown](#) demonstra a sintaxe `listing:` para texto estruturado:
 
 ```listing:vantagens-specdown{caption="Principais vantagens do SpecCompiler" source="Elaboração própria"}
 1. SINTAXE SIMPLES
@@ -127,7 +180,7 @@ O [listing:vantagens-specdown](#) demonstra a sintaxe `listing:` para informaç�
 
 #### Listagem de Código (com realce)
 
-O [src.c:hello-world](#) demonstra a sintaxe `src.c:` para código-fonte com realce de sintaxe:
+A [src.c:hello-world](#) demonstra a sintaxe `src.c:` para código-fonte com realce de sintaxe:
 
 ```src.c:hello-world{caption="Programa Hello World em C" source="Elaboração própria"}
 #include <stdio.h>
@@ -138,7 +191,57 @@ int main(void) {
 }
 ```
 
-Outras linguagens suportadas incluem: `src.lua:`, `src.python:`, `src.java:`, `src.js:`, `src.sql:`, entre outras. A lista completa depende do Pandoc Skylighting.
+Outras linguagens suportadas incluem `src.lua:`, `src.python:`, `src.java:`, `src.js:` e `src.sql:`. A lista completa depende do Pandoc Skylighting.
+
+### Variantes: Invertendo o Padrão
+
+Quando o conteúdo não segue a natureza da sintaxe, use a variante. O
+[csv-q:estilos-markdown](#) usa CSV para informação textual, e por isso pede
+`csv-q:` para sair com grade completa:
+
+```csv-q:estilos-markdown{caption="Estilos de formatação em Markdown" source="Elaboração própria"}
+Sintaxe,Descrição
+**Negrito**,Ênfase forte
+*Itálico*,Ênfase leve
+`Código`,Elemento de código inline
+[Link](url),Hiperlink
+```
+
+Na direção oposta, dados numéricos às vezes precisam da sintaxe `list-table` por
+uma razão prática: **em português o separador decimal é a vírgula**, que também
+separa os campos do CSV. Escrito sem aspas, `3,0` vira duas colunas — e o valor
+excedente é descartado silenciosamente:
+
+    Elemento,Medida
+    Superior,3,0        → a célula vira "3"; o ",0" se perde
+    Superior,"3,0"      → correto, mas exige aspas em cada valor
+
+A [list-table-t:medidas-margens](#) evita o conflito de vez, e `list-table-t:`
+garante a formatação de tabela:
+
+```list-table-t:medidas-margens{caption="Margens e recuos exigidos pela NBR 14724" source="@NBR14724:2011"}
+> header-rows: 1
+> aligns: l,r,r
+
+* - Elemento
+  - Medida (cm)
+  - Tolerância (cm)
+* - Margem superior
+  - 3,0
+  - 0,5
+* - Margem inferior
+  - 2,0
+  - 0,5
+* - Margem esquerda
+  - 3,0
+  - 0,5
+* - Margem direita
+  - 2,0
+  - 0,5
+* - Recuo de parágrafo
+  - 1,25
+  - 0,25
+```
 
 ### Equações e Fórmulas com AsciiMath
 

@@ -15,14 +15,14 @@ A legenda é posicionada abaixo da figura, seguida da fonte — conforme exige a
 Quando a imagem original é alta demais para a página, limite a altura diretamente nos
 atributos do bloco. A largura será ajustada proporcionalmente pelo processador DOCX:
 
-    ```fig:identificador-limitado{caption="Legenda da figura limitada" source="Fonte" height="7cm"}
+    ```fig:identificador-limitado{caption="Legenda da figura limitada" source="Fonte" height="5cm"}
     caminho/para/imagem.jpg
     ```
 
 A [fig:capybara-limitada](#) usa a mesma imagem do exemplo inicial, mas com altura
 máxima definida para deixar mais espaço para texto, legenda e fonte na página.
 
-```fig:capybara-limitada{caption="Capivara com altura limitada para composição da página" source="Autor" height="7cm"}
+```fig:capybara-limitada{caption="Capivara com altura limitada para composição da página" source="Autor" height="5cm"}
 ../assets/capybara.jpg
 ```
 
@@ -30,30 +30,50 @@ máxima definida para deixar mais espaço para texto, legenda e fonte na página
 
 Gráficos são renderizados usando ECharts[^echarts], uma biblioteca de visualização de dados. O corpo do bloco contém a configuração JSON do gráfico, e os dados podem vir de duas fontes:
 
+- **`generator`** (ou `view`): invoca um módulo Lua que calcula os dados programaticamente
+- **`query`**: consulta uma view SQL sobre o banco de dados do próprio documento
+
 [^echarts]: Apache ECharts — biblioteca open-source para visualização interativa. Documentação em <https://echarts.apache.org>.
 
-- **`query`**: consulta uma view SQL do banco de dados do documento
-- **`generator`**: invoca uma função Lua que gera os dados programaticamente
+O capítulo *Referências Cruzadas* demonstra a segunda forma, com um gráfico
+alimentado pelas relações extraídas deste documento.
 
-A [chart:abnt-types](#) demonstra o uso de `query` — os dados vêm diretamente do próprio documento, mostrando a distribuição dos tipos ABNT utilizados nesta monografia:
+#### Geradores Lua para Funções Matemáticas
 
-```chart:abnt-types{query="abnt_types_summary" caption="Tipos ABNT utilizados neste documento" height="5cm"}
-{
-  "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
-  "legend": {"data": ["Obrigatório", "Opcional"], "bottom": 0},
-  "xAxis": {"type": "category", "axisLabel": {"fontSize": 10, "rotate": 15}},
-  "yAxis": {"type": "value", "name": "Qtd"},
-  "dataset": {},
-  "series": [
-    {"type": "bar", "stack": "total", "name": "Obrigatório", "encode": {"x": "category", "y": "obrigatorio_count"}, "itemStyle": {"color": "#5470c6"}},
-    {"type": "bar", "stack": "total", "name": "Opcional", "encode": {"x": "category", "y": "opcional_count"}, "itemStyle": {"color": "#91cc75"}}
-  ]
+Geradores Lua são particularmente úteis para visualizar funções matemáticas. Cada gerador implementa uma função específica e pode ser invocado via atributo `generator` ou `view` no bloco de código do gráfico.
+
+**Como criar um novo gerador:**
+
+Um gerador é um módulo Lua em `types/views/` que segue este padrão:
+
+```lua
+return {
+    kind = "view",
+    schema = {
+        id = "ID_UNICO",                    -- Identificador em maiúsculas
+        long_name = "Nome Descritivo",
+        description = "O que faz",
+        inline_prefix = "prefixo",          -- Sintaxe inline: `prefixo: param=valor`
+        aliases = { "alias1", "alias2" },   -- Nomes alternativos
+    },
+    hooks = {
+        render = function(ctx)              -- Para uso inline
+            -- Renderiza resumo de parâmetros
+        end,
+        dataset = function(dctx)            -- Para dados do gráfico
+            local params = dctx.subject.params or {}
+            -- Processar params, calcular função, retornar dados
+            return { source = {{ "x", "y" }, {x1, y1}, ... } }
+        end,
+    },
 }
 ```
 
-Para o template ABNT, geradores Lua são particularmente úteis para visualizar funções matemáticas — como a [chart:curva-gauss](#), que renderiza a distribuição normal a partir de parâmetros:
+**Exemplo: Distribuição Normal**
 
-```chart:curva-gauss{generator="gaussian" mean="0" sigma="1" xmin="-3" xmax="3" points="61" caption="Distribuição Normal — gerada via Lua" height="5cm"}
+A [chart:curva-gauss](#) renderiza a distribuição normal a partir de parâmetros:
+
+```chart:curva-gauss{generator="gauss" mean="0" sigma="1" xmin="-3" xmax="3" points="61" caption="Distribuição Normal — gerada via Lua" height="5cm"}
 {
   "tooltip": {"trigger": "axis"},
   "xAxis": {"type": "value", "name": "x", "min": -3, "max": 3},
@@ -64,6 +84,26 @@ Para o template ABNT, geradores Lua são particularmente úteis para visualizar 
     "symbol": "none",
     "lineStyle": {"width": 2, "color": "#5470c6"},
     "areaStyle": {"color": {"type": "linear", "x": 0, "y": 0, "x2": 0, "y2": 1, "colorStops": [{"offset": 0, "color": "rgba(84,112,198,0.5)"}, {"offset": 1, "color": "rgba(84,112,198,0.1)"}]}},
+    "encode": {"x": "x", "y": "y"}
+  }]
+}
+```
+
+**Exemplo: Decaimento Exponencial**
+
+A [chart:curva-exponencial](#) implementa uma nova função de decaimento exponencial (`f(x) = e^(-λx) + offset`):
+
+```chart:curva-exponencial{generator="exponential" lambda="0.5" offset="0" xmin="0" xmax="10" points="81" caption="Decaimento Exponencial — f(x) = e^(-0.5x)" height="5cm"}
+{
+  "tooltip": {"trigger": "axis"},
+  "xAxis": {"type": "value", "name": "x", "min": 0, "max": 10},
+  "yAxis": {"type": "value", "name": "f(x)", "min": 0, "max": 1.1},
+  "series": [{
+    "type": "line",
+    "smooth": true,
+    "symbol": "none",
+    "lineStyle": {"width": 2, "color": "#91cc75"},
+    "areaStyle": {"color": {"type": "linear", "x": 0, "y": 0, "x2": 0, "y2": 1, "colorStops": [{"offset": 0, "color": "rgba(145,204,117,0.5)"}, {"offset": 1, "color": "rgba(145,204,117,0.1)"}]}},
     "encode": {"x": "x", "y": "y"}
   }]
 }

@@ -46,19 +46,23 @@ Agradecemos à comunidade de software livre, especialmente aos desenvolvedores d
 
 ## Resumo
 
-Este documento serve como tutorial e demonstração do template `sigla: Associação Brasileira de Normas Técnicas (ABNT)` do SpecCompiler. Através de uma estrutura auto-referencial, apresenta-se como criar trabalhos acadêmicos em formato Markdown que são automaticamente convertidos para documentos DOCX em conformidade com a NBR 14724 [NBR14724:2011](@cite). São demonstradas as funcionalidades de elementos pré-textuais, textuais e pós-textuais, além de recursos como tabelas, quadros, gráficos baseados em dados, figuras, citações bibliográficas e listas automáticas de siglas, figuras e tabelas.
+Este documento serve como tutorial e demonstração do template `sigla: Associação Brasileira de Normas Técnicas (ABNT)` do SpecCompiler. Através de uma estrutura auto-referencial, apresenta-se como criar trabalhos acadêmicos em formato Markdown que são automaticamente convertidos para documentos DOCX em conformidade com a NBR 14724 [NBR14724:2011](@cite). São demonstradas as funcionalidades de elementos pré-textuais, textuais e pós-textuais, além de recursos como tabelas e quadros (com a distinção de formatação exigida pela ABNT), gráficos baseados em dados, figuras, citações bibliográficas e listas automáticas de siglas, figuras, tabelas e quadros.
 
 > Palavras-chave: SpecCompiler, ABNT, markdown, trabalhos acadêmicos, NBR 14724.
 
 ## Abstract
 
-This document serves as a tutorial and demonstration of the SpecCompiler ABNT template. Through a self-referential structure, it presents how to create academic works in Markdown format that are automatically converted to DOCX documents in compliance with NBR 14724. The functionalities of pre-textual, textual and post-textual elements are demonstrated, as well as features such as tables, frames, data-driven charts, figures, bibliographic citations and automatic lists of abbreviations, figures and tables.
+This document serves as a tutorial and demonstration of the SpecCompiler ABNT template. Through a self-referential structure, it presents how to create academic works in Markdown format that are automatically converted to DOCX documents in compliance with NBR 14724. The functionalities of pre-textual, textual and post-textual elements are demonstrated, as well as features such as tables and frames (with the distinct formatting required by ABNT), data-driven charts, figures, bibliographic citations and automatic lists of abbreviations, figures, tables and frames.
 
 > Keywords: SpecCompiler, ABNT, markdown, academic works, NBR 14724.
 
 ## Lista de Figuras
 
 ## Lista de Tabelas
+
+## Lista de Quadros
+
+## Lista de Listagens
 
 ## Lista de Abreviaturas e Siglas
 
